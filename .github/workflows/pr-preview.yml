@@ -1,0 +1,171 @@
+name: PR プレビュー
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: Go セットアップ
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: ビルド
+        run: go build -o emo .
+
+      - name: プレビュー画像生成
+        run: |
+          mkdir -p preview-images
+
+          # 1行パターン
+          ./emo -o preview-images/single-short.png '猫'
+          ./emo -o preview-images/single-medium.png 'お気持ち'
+
+          # 改行含むパターン
+          ./emo -o preview-images/multiline-2.png '猫に\小判'
+          ./emo -o preview-images/multiline-long.png 'ありがとう\ございます'
+
+          # 背景色が異なるパターン
+          ./emo --bg '#E63946' -o preview-images/bg-red.png 'LGTM'
+          ./emo --bg '#2ECC71' -o preview-images/bg-green.png '完了'
+          ./emo --bg '#F39C12' -o preview-images/bg-orange.png '注意'
+          ./emo --bg '#6C3483' -o preview-images/bg-purple.png 'WIP'
+
+      - name: previews ブランチに画像をプッシュ
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          # 画像を一時保存
+          cp -r preview-images /tmp/preview-images
+
+          # previews ブランチに切り替え（なければ作成）
+          git fetch origin previews 2>/dev/null || true
+          if git ls-remote --exit-code origin previews > /dev/null 2>&1; then
+            git checkout previews
+            git pull origin previews
+          else
+            git checkout --orphan previews
+            git rm -rf . 2>/dev/null || true
+            echo "# Preview Images" > README.md
+            git add README.md
+            git commit -m "Initialize previews branch"
+          fi
+
+          # PR用ディレクトリに画像をコピー
+          mkdir -p "pr-${PR_NUMBER}"
+          cp /tmp/preview-images/*.png "pr-${PR_NUMBER}/"
+
+          git add "pr-${PR_NUMBER}"
+          git diff --cached --quiet || git commit -m "preview: PR #${PR_NUMBER} [skip ci]"
+          git push origin previews
+
+      - name: PR にコメント
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+            const { owner, repo } = context.repo;
+            const base = `https://raw.githubusercontent.com/${owner}/${repo}/previews/pr-${pr}`;
+            const sha = context.payload.pull_request.head.sha.substring(0, 7);
+
+            const body = [
+              `## 絵文字プレビュー (${sha})`,
+              '',
+              '> ビルドコマンドで生成した絵文字のプレビューです。',
+              '',
+              '### 改行含むパターン',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo '猫に\\小判'\` | ![猫に\\小判](${base}/multiline-2.png) |`,
+              `| \`emo 'ありがとう\\ございます'\` | ![ありがとう\\ございます](${base}/multiline-long.png) |`,
+              '',
+              '### 背景色が異なるパターン',
+              '',
+              '| 背景色 | コマンド | 出力 |',
+              '|--------|---------|------|',
+              `| デフォルト (#1D3557) | \`emo 'お気持ち'\` | ![お気持ち](${base}/single-medium.png) |`,
+              `| 赤 (#E63946) | \`emo --bg '#E63946' 'LGTM'\` | ![LGTM](${base}/bg-red.png) |`,
+              `| 緑 (#2ECC71) | \`emo --bg '#2ECC71' '完了'\` | ![完了](${base}/bg-green.png) |`,
+              `| オレンジ (#F39C12) | \`emo --bg '#F39C12' '注意'\` | ![注意](${base}/bg-orange.png) |`,
+              `| 紫 (#6C3483) | \`emo --bg '#6C3483' 'WIP'\` | ![WIP](${base}/bg-purple.png) |`,
+              '',
+              '### その他',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo '猫'\` | ![猫](${base}/single-short.png) |`,
+            ].join('\n');
+
+            // 既存のボットコメントを探して更新、なければ作成
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pr,
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.startsWith('## 絵文字プレビュー')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+              console.log(`Updated comment ${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr,
+                body,
+              });
+              console.log('Created new comment');
+            }
+
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: previews ブランチからPR画像を削除
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          git fetch origin previews 2>/dev/null || exit 0
+          if ! git ls-remote --exit-code origin previews > /dev/null 2>&1; then
+            exit 0
+          fi
+
+          git checkout previews
+          git pull origin previews
+
+          if [ -d "pr-${PR_NUMBER}" ]; then
+            git rm -rf "pr-${PR_NUMBER}"
+            git commit -m "cleanup: PR #${PR_NUMBER} [skip ci]"
+            git push origin previews
+          fi
