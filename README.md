@@ -2,6 +2,8 @@
 
 テキストからSlack絵文字用の画像（128×128px PNG）を生成するCLIツール。
 
+**サンプル**: https://ayato-p.github.io/slack-emoji-cli/
+
 ## インストール
 
 ```bash
