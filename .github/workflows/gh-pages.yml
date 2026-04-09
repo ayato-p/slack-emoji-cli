@@ -42,6 +42,11 @@ jobs:
           ./emo --bg '#F39C12' -o sample-images/bg-orange.png '注意'
           ./emo --bg '#6C3483' -o sample-images/bg-purple.png 'WIP'
 
+          # 回転アニメパターン
+          ./emo --rotate -o sample-images/rotate-single.gif 'LGTM'
+          ./emo --rotate -o sample-images/rotate-multi.gif '猫に\小判'
+          ./emo --rotate --bg '#E63946' -o sample-images/rotate-bg-red.gif '完了'
+
       - name: index.html 生成
         run: |
           SHA="${{ github.sha }}"
@@ -167,6 +172,27 @@ jobs:
               </tbody>
             </table>
 
+            <h2>回転アニメ (--rotate)</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --rotate 'LGTM'</code></td>
+                  <td><img src="rotate-single.gif" alt="LGTM"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --rotate '猫に\小判'</code></td>
+                  <td><img src="rotate-multi.gif" alt="猫に\小判"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --rotate --bg '#E63946' '完了'</code></td>
+                  <td><img src="rotate-bg-red.gif" alt="完了"></td>
+                </tr>
+              </tbody>
+            </table>
+
             <h2>その他</h2>
             <table>
               <thead>
@@ -202,8 +228,9 @@ jobs:
           fi
 
           cp /tmp/sample-images/*.png .
+          cp /tmp/sample-images/*.gif .
           cp /tmp/sample-images/index.html .
 
-          git add *.png index.html
+          git add *.png *.gif index.html
           git diff --cached --quiet || git commit -m "deploy: gh-pages サンプル更新 [skip ci]"
           git push origin gh-pages
