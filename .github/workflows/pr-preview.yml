@@ -43,6 +43,11 @@ jobs:
           ./emo --bg '#F39C12' -o preview-images/bg-orange.png '注意'
           ./emo --bg '#6C3483' -o preview-images/bg-purple.png 'WIP'
 
+          # 回転アニメパターン
+          ./emo --rotate -o preview-images/rotate-single.gif 'LGTM'
+          ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
+          ./emo --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
+
       - name: previews ブランチに画像をプッシュ
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -68,7 +73,7 @@ jobs:
 
           # PR用ディレクトリに画像をコピー
           mkdir -p "pr-${PR_NUMBER}"
-          cp /tmp/preview-images/*.png "pr-${PR_NUMBER}/"
+          cp /tmp/preview-images/* "pr-${PR_NUMBER}/"
 
           git add "pr-${PR_NUMBER}"
           git diff --cached --quiet || git commit -m "preview: PR #${PR_NUMBER} [skip ci]"
@@ -104,6 +109,14 @@ jobs:
               `| 緑 (#2ECC71) | \`emo --bg '#2ECC71' '完了'\` | ![完了](${base}/bg-green.png) |`,
               `| オレンジ (#F39C12) | \`emo --bg '#F39C12' '注意'\` | ![注意](${base}/bg-orange.png) |`,
               `| 紫 (#6C3483) | \`emo --bg '#6C3483' 'WIP'\` | ![WIP](${base}/bg-purple.png) |`,
+              '',
+              '### 回転アニメ (--rotate)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --rotate 'LGTM'\` | ![LGTM](${base}/rotate-single.gif) |`,
+              `| \`emo --rotate '猫に\\小判'\` | ![猫に\\小判](${base}/rotate-multi.gif) |`,
+              `| \`emo --rotate --bg '#E63946' '完了'\` | ![完了](${base}/rotate-bg-red.gif) |`,
               '',
               '### その他',
               '',
