@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"image/color"
+	"image/gif"
 	"image/png"
 	"os"
 	"strings"
@@ -14,9 +15,11 @@ import (
 func main() {
 	var output string
 	var bgHex string
+	var rotate bool
 
-	flag.StringVar(&output, "o", "emoji.png", "output file path")
+	flag.StringVar(&output, "o", "", "output file path (default: emoji.png, or emoji.gif with --rotate)")
 	flag.StringVar(&bgHex, "bg", "#1D3557", "background color (hex, e.g. #1D3557)")
+	flag.BoolVar(&rotate, "rotate", false, "add rotation animation (outputs GIF)")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: emo [options] TEXT")
 		fmt.Fprintln(os.Stderr, "  TEXT: text to render; use \\ to separate lines (e.g. '猫に\\小判')")
@@ -31,18 +34,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Set default output filename based on animation flags
+	if output == "" {
+		if rotate {
+			output = "emoji.gif"
+		} else {
+			output = "emoji.png"
+		}
+	}
+
 	text := flag.Arg(0)
 	lines := strings.Split(text, `\`)
 
 	bgColor, err := parseHexColor(bgHex)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "invalid bg color %q: %v\n", bgHex, err)
-		os.Exit(1)
-	}
-
-	img, err := render.Render(lines, bgColor)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -53,9 +59,32 @@ func main() {
 	}
 	defer f.Close()
 
-	if err := png.Encode(f, img); err != nil {
-		fmt.Fprintf(os.Stderr, "png encode error: %v\n", err)
-		os.Exit(1)
+	// Build transformer list from animation flags
+	var transformers []render.Transformer
+	if rotate {
+		transformers = append(transformers, render.Rotate())
+	}
+
+	if len(transformers) > 0 {
+		anim, err := render.RenderGIF(lines, bgColor, transformers)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
+			os.Exit(1)
+		}
+		if err := gif.EncodeAll(f, anim); err != nil {
+			fmt.Fprintf(os.Stderr, "gif encode error: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		img, err := render.Render(lines, bgColor)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
+			os.Exit(1)
+		}
+		if err := png.Encode(f, img); err != nil {
+			fmt.Fprintf(os.Stderr, "png encode error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	fmt.Fprintf(os.Stderr, "saved: %s\n", output)
