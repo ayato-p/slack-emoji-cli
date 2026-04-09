@@ -1,0 +1,41 @@
+slack-emoji-cli
+Copyright (c) 2026 ayato-p
+
+This project is licensed under the MIT License (see LICENSE).
+
+---
+
+This software includes the following third-party components:
+
+## Noto Sans JP
+
+  Copyright 2014-2021 Adobe (http://www.adobe.com/)
+
+  Licensed under the SIL Open Font License, Version 1.1.
+  See LICENSES/OFL-1.1.txt for the full license text.
+
+  The Noto Sans JP font is embedded in compiled binaries of this software.
+
+## github.com/fogleman/gg
+
+  Copyright (C) 2016 Michael Fogleman
+
+  Licensed under the MIT License.
+  See LICENSES/MIT-fogleman-gg.txt for the full license text.
+
+## github.com/golang/freetype
+
+  Copyright 1996-2002, 2006 by David Turner, Robert Wilhelm, and Werner Lemberg.
+
+  This software is distributed under the FreeType License (FTL).
+  See LICENSES/FreeType.txt for the full license text.
+
+  Portions of this software are copyright © 2006 The FreeType Project
+  (www.freetype.org). All rights reserved.
+
+## golang.org/x/image, golang.org/x/text
+
+  Copyright 2009 The Go Authors.
+
+  Licensed under the BSD 3-Clause License.
+  See LICENSES/BSD-3-Clause.txt for the full license text.
