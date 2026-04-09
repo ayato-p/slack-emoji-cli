@@ -9,8 +9,8 @@ import (
 
 const (
 	canvasSize = 128
-	padding    = 8
-	drawArea   = canvasSize - padding*2 // 112px
+	padding    = 2
+	drawArea   = canvasSize - padding*2 // 124px
 )
 
 // Render generates a 128x128 PNG-compatible image with the given lines of text
@@ -28,15 +28,12 @@ func Render(lines []string, bgColor color.Color) (image.Image, error) {
 	)
 	ctx.Clear()
 
-	// Determine starting font size based on number of lines
 	n := len(lines)
-	startSize := 52.0 - float64(n-1)*16.0
-	if startSize < 12 {
-		startSize = 12
-	}
+	const lineSpacing = 1.1
 
 	// Find the largest font size where all lines fit within the draw area
-	fontSize := startSize
+	// (checked for both width and total height)
+	fontSize := 120.0
 	for fontSize >= 6 {
 		face, err := loadFace(fontSize)
 		if err != nil {
@@ -44,12 +41,17 @@ func Render(lines []string, bgColor color.Color) (image.Image, error) {
 		}
 		ctx.SetFontFace(face)
 
-		fits := true
-		for _, line := range lines {
-			w, _ := ctx.MeasureString(line)
-			if w > drawArea {
-				fits = false
-				break
+		lineHeight := fontSize * lineSpacing
+		totalHeight := float64(n) * lineHeight
+
+		fits := totalHeight <= drawArea
+		if fits {
+			for _, line := range lines {
+				w, _ := ctx.MeasureString(line)
+				if w > drawArea {
+					fits = false
+					break
+				}
 			}
 		}
 		if fits {
@@ -60,7 +62,7 @@ func Render(lines []string, bgColor color.Color) (image.Image, error) {
 
 	// Draw text centered
 	ctx.SetColor(color.White)
-	lineHeight := fontSize * 1.3
+	lineHeight := fontSize * lineSpacing
 
 	for i, line := range lines {
 		y := canvasSize/2 + (float64(i)-float64(n-1)/2)*lineHeight
