@@ -26,7 +26,9 @@ func RenderGIF(lines []string, bgColor color.Color, transformers []Transformer) 
 
 	n := len(lines)
 	lineH := ascent + descent
-	baseline0 := (canvasSize - float64(n-1)*lineH + ascent - descent) / 2
+	firstAscent, _ := glyphBounds(face, lines[0])
+	_, lastDescent := glyphBounds(face, lines[n-1])
+	baseline0 := (canvasSize - float64(n-1)*lineH + firstAscent - lastDescent) / 2
 
 	g := &gif.GIF{LoopCount: 0}
 

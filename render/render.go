@@ -52,6 +52,15 @@ func findFontAndMetrics(lines []string) (font.Face, float64, float64, error) {
 	return face, float64(m.Ascent) / 64, float64(m.Descent) / 64, nil
 }
 
+// glyphBounds returns the actual glyph ascent and descent for a string using
+// font.Drawer.BoundString, which reflects the real rendered extent of the glyphs
+// rather than the font-wide metrics that may include space not used by CJK characters.
+func glyphBounds(face font.Face, s string) (glyphAscent, glyphDescent float64) {
+	d := &font.Drawer{Face: face}
+	bounds, _ := d.BoundString(s)
+	return float64(-bounds.Min.Y) / 64, float64(bounds.Max.Y) / 64
+}
+
 // Render generates a 128x128 PNG-compatible image with the given lines of text
 // centered on a solid background color.
 func Render(lines []string, bgColor color.Color) (image.Image, error) {
@@ -77,16 +86,22 @@ func Render(lines []string, bgColor color.Color) (image.Image, error) {
 
 	// Compute baseline positions so glyphs are visually centered.
 	//
+	// Use actual glyph bounds (not font-wide metrics) so that CJK characters,
+	// which often don't use the full ascent, are centered on their ink rather
+	// than on the larger typographic box.
+	//
 	// For n lines spaced by lineH = ascent+descent:
-	//   visual_top    = baseline_0 - ascent
-	//   visual_bottom = baseline_{n-1} + descent
-	//                 = baseline_0 + (n-1)*lineH + descent
+	//   visual_top    = baseline_0 - firstAscent
+	//   visual_bottom = baseline_{n-1} + lastDescent
+	//                 = baseline_0 + (n-1)*lineH + lastDescent
 	//
 	// Setting (visual_top + visual_bottom) / 2 == canvasSize/2 gives:
-	//   baseline_0 = (canvasSize - (n-1)*lineH + ascent - descent) / 2
+	//   baseline_0 = (canvasSize - (n-1)*lineH + firstAscent - lastDescent) / 2
 	n := len(lines)
 	lineH := ascent + descent
-	baseline0 := (canvasSize - float64(n-1)*lineH + ascent - descent) / 2
+	firstAscent, _ := glyphBounds(face, lines[0])
+	_, lastDescent := glyphBounds(face, lines[n-1])
+	baseline0 := (canvasSize - float64(n-1)*lineH + firstAscent - lastDescent) / 2
 
 	for i, line := range lines {
 		baseline := baseline0 + float64(i)*lineH
