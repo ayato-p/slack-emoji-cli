@@ -1,6 +1,6 @@
 module github.com/ayato-p/slack-emoji-cli
 
-go 1.24.7
+go 1.26.2
 
 require (
 	github.com/fogleman/gg v1.3.0 // indirect
