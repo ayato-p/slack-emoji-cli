@@ -3,7 +3,7 @@ name: gh-pages デプロイ
 on:
   push:
     branches:
-      - master
+      - main
 
 permissions:
   contents: write
