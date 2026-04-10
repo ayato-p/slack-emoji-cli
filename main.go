@@ -12,16 +12,53 @@ import (
 	"github.com/ayato-p/slack-emoji-cli/render"
 )
 
+// animFlag is a flag that can be used as a boolean (--flag) or with a value
+// (--flag=reverse). Valid values are "true", "false", and "reverse".
+type animFlag struct {
+	set     bool
+	reverse bool
+}
+
+func (f *animFlag) String() string {
+	if !f.set {
+		return "false"
+	}
+	if f.reverse {
+		return "reverse"
+	}
+	return "true"
+}
+
+func (f *animFlag) Set(s string) error {
+	switch s {
+	case "true":
+		f.set = true
+		f.reverse = false
+	case "false":
+		f.set = false
+		f.reverse = false
+	case "reverse":
+		f.set = true
+		f.reverse = true
+	default:
+		return fmt.Errorf("invalid value %q: must be true, false, or reverse", s)
+	}
+	return nil
+}
+
+// IsBoolFlag allows the flag to be used without a value (--flag sets it to true).
+func (f *animFlag) IsBoolFlag() bool { return true }
+
 func main() {
 	var output string
 	var bgHex string
-	var rotate bool
-	var revolve bool
+	var rotate animFlag
+	var revolve animFlag
 
 	flag.StringVar(&output, "o", "", "output file path (default: emoji.png, or emoji.gif with --rotate/--revolve)")
 	flag.StringVar(&bgHex, "bg", "#1D3557", "background color (hex, e.g. #1D3557)")
-	flag.BoolVar(&rotate, "rotate", false, "add rotation animation (outputs GIF)")
-	flag.BoolVar(&revolve, "revolve", false, "add revolve animation: characters orbit the canvas center (outputs GIF)")
+	flag.Var(&rotate, "rotate", "add rotation animation (outputs GIF); use =reverse to reverse direction")
+	flag.Var(&revolve, "revolve", "add revolve animation: characters orbit the canvas center (outputs GIF); use =reverse to reverse direction")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: emo [options] TEXT")
 		fmt.Fprintln(os.Stderr, "  TEXT: text to render; use \\ to separate lines (e.g. '猫に\\小判')")
@@ -36,14 +73,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if rotate && revolve {
+	if rotate.set && revolve.set {
 		fmt.Fprintln(os.Stderr, "--rotate and --revolve cannot be used together")
 		os.Exit(1)
 	}
 
 	// Set default output filename based on animation flags
 	if output == "" {
-		if rotate || revolve {
+		if rotate.set || revolve.set {
 			output = "emoji.gif"
 		} else {
 			output = "emoji.png"
@@ -66,8 +103,8 @@ func main() {
 	}
 	defer f.Close()
 
-	if revolve {
-		anim, err := render.RevolveGIF(lines, bgColor)
+	if revolve.set {
+		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 			os.Exit(1)
@@ -79,8 +116,8 @@ func main() {
 	} else {
 		// Build transformer list from animation flags
 		var transformers []render.Transformer
-		if rotate {
-			transformers = append(transformers, render.Rotate())
+		if rotate.set {
+			transformers = append(transformers, render.Rotate(rotate.reverse))
 		}
 
 		if len(transformers) > 0 {
