@@ -28,7 +28,7 @@ import (
 //
 // One full 360° revolution equals one GIF cycle.
 // When reverse is true, the revolution direction is reversed.
-func RevolveGIF(lines []string, bgColor color.Color, reverse bool) (*gif.GIF, error) {
+func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64) (*gif.GIF, error) {
 	// Flatten all characters from all lines into one slice (reading order)
 	var chars []string
 	for _, line := range lines {
@@ -94,6 +94,11 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool) (*gif.GIF, er
 
 	cx, cy := float64(canvasSize)/2, float64(canvasSize)/2
 
+	actualDelay := int(math.Round(float64(frameDelay) / speed))
+	if actualDelay < 1 {
+		actualDelay = 1
+	}
+
 	// halfMetricSpan converts orbit-center Y back to baseline Y:
 	//   baseline = yOrbit + halfMetricSpan
 	halfMetricSpan := (ascent - descent) / 2
@@ -143,7 +148,7 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool) (*gif.GIF, er
 		paletted := image.NewPaletted(img.Bounds(), palette.Plan9)
 		draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.Point{})
 		g.Image = append(g.Image, paletted)
-		g.Delay = append(g.Delay, frameDelay)
+		g.Delay = append(g.Delay, actualDelay)
 	}
 
 	return g, nil
