@@ -6,6 +6,7 @@ import (
 	"image/color/palette"
 	"image/draw"
 	"image/gif"
+	"math"
 
 	"github.com/fogleman/gg"
 )
@@ -18,7 +19,7 @@ const (
 // RenderGIF generates an animated GIF with the given lines of text on a solid
 // background color. Each frame has all transformers applied in order, enabling
 // composable animations.
-func RenderGIF(lines []string, bgColor color.Color, transformers []Transformer) (*gif.GIF, error) {
+func RenderGIF(lines []string, bgColor color.Color, transformers []Transformer, speed float64) (*gif.GIF, error) {
 	face, ascent, descent, err := findFontAndMetrics(lines)
 	if err != nil {
 		return nil, err
@@ -29,6 +30,11 @@ func RenderGIF(lines []string, bgColor color.Color, transformers []Transformer) 
 	firstAscent, _ := glyphBounds(face, lines[0])
 	_, lastDescent := glyphBounds(face, lines[n-1])
 	baseline0 := (canvasSize - float64(n-1)*lineH + firstAscent - lastDescent) / 2
+
+	actualDelay := int(math.Round(float64(frameDelay) / speed))
+	if actualDelay < 1 {
+		actualDelay = 1
+	}
 
 	g := &gif.GIF{LoopCount: 0}
 
@@ -65,7 +71,7 @@ func RenderGIF(lines []string, bgColor color.Color, transformers []Transformer) 
 		draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.Point{})
 
 		g.Image = append(g.Image, paletted)
-		g.Delay = append(g.Delay, frameDelay)
+		g.Delay = append(g.Delay, actualDelay)
 	}
 
 	return g, nil

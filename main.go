@@ -54,11 +54,13 @@ func main() {
 	var bgHex string
 	var rotate animFlag
 	var revolve animFlag
+	var speed float64
 
 	flag.StringVar(&output, "o", "", "output file path (default: emoji.png, or emoji.gif with --rotate/--revolve)")
 	flag.StringVar(&bgHex, "bg", "#1D3557", "background color (hex, e.g. #1D3557)")
 	flag.Var(&rotate, "rotate", "add rotation animation (outputs GIF); use =reverse to reverse direction")
 	flag.Var(&revolve, "revolve", "add revolve animation: characters orbit the canvas center (outputs GIF); use =reverse to reverse direction")
+	flag.Float64Var(&speed, "speed", 1.0, "animation speed multiplier (0.5–2.0, GIF only)")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: emo [options] TEXT")
 		fmt.Fprintln(os.Stderr, "  TEXT: text to render; use \\ to separate lines (e.g. '猫に\\小判')")
@@ -75,6 +77,11 @@ func main() {
 
 	if rotate.set && revolve.set {
 		fmt.Fprintln(os.Stderr, "--rotate and --revolve cannot be used together")
+		os.Exit(1)
+	}
+
+	if speed < 0.5 || speed > 2.0 {
+		fmt.Fprintln(os.Stderr, "--speed must be between 0.5 and 2.0")
 		os.Exit(1)
 	}
 
@@ -104,7 +111,7 @@ func main() {
 	defer f.Close()
 
 	if revolve.set {
-		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse)
+		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse, speed)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 			os.Exit(1)
@@ -121,7 +128,7 @@ func main() {
 		}
 
 		if len(transformers) > 0 {
-			anim, err := render.RenderGIF(lines, bgColor, transformers)
+			anim, err := render.RenderGIF(lines, bgColor, transformers, speed)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 				os.Exit(1)
