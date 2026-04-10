@@ -61,6 +61,12 @@ jobs:
           ./emo --revolve=reverse -o preview-images/revolve-reverse-2x2.gif 'ab\cd'
           ./emo --revolve=reverse -o preview-images/revolve-reverse-multi.gif '猫に\小判'
 
+          # 速度調整パターン
+          ./emo --rotate --speed 0.5 -o preview-images/rotate-speed-slow.gif 'LGTM'
+          ./emo --rotate --speed 2.0 -o preview-images/rotate-speed-fast.gif 'LGTM'
+          ./emo --revolve --speed 0.5 -o preview-images/revolve-speed-slow.gif 'ab\cd'
+          ./emo --revolve --speed 2.0 -o preview-images/revolve-speed-fast.gif 'ab\cd'
+
       - name: previews ブランチに画像をプッシュ
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -142,6 +148,15 @@ jobs:
               `| \`emo --revolve --bg '#E63946' 'ab\\cd'\` | ![ab\\cd](${base}/revolve-bg-red.gif) |`,
               `| \`emo --revolve=reverse 'ab\\cd'\` | ![ab\\cd](${base}/revolve-reverse-2x2.gif) |`,
               `| \`emo --revolve=reverse '猫に\\小判'\` | ![猫に\\小判](${base}/revolve-reverse-multi.gif) |`,
+              '',
+              '### 速度調整 (--speed)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --rotate --speed 0.5 'LGTM'\` | ![LGTM](${base}/rotate-speed-slow.gif) |`,
+              `| \`emo --rotate --speed 2.0 'LGTM'\` | ![LGTM](${base}/rotate-speed-fast.gif) |`,
+              `| \`emo --revolve --speed 0.5 'ab\\cd'\` | ![ab\\cd](${base}/revolve-speed-slow.gif) |`,
+              `| \`emo --revolve --speed 2.0 'ab\\cd'\` | ![ab\\cd](${base}/revolve-speed-fast.gif) |`,
               '',
               '### その他',
               '',
