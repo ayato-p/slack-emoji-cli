@@ -64,7 +64,7 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>b4508c3</code>
+    &nbsp;|&nbsp; commit: <code>df519d2</code>
   </p>
 
   <h2>改行含むパターン</h2>
@@ -172,6 +172,31 @@
       <tr>
         <td><code>emo --revolve=reverse '猫に\小判'</code></td>
         <td><img src="revolve-reverse-multi.gif" alt="猫に\小判 (reverse)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>速度調整 (--speed)</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --rotate --speed 0.5 'LGTM'</code></td>
+        <td><img src="rotate-speed-slow.gif" alt="LGTM (0.5x)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --rotate --speed 2.0 'LGTM'</code></td>
+        <td><img src="rotate-speed-fast.gif" alt="LGTM (2.0x)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --revolve --speed 0.5 'ab\cd'</code></td>
+        <td><img src="revolve-speed-slow.gif" alt="ab\cd (0.5x)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --revolve --speed 2.0 'ab\cd'</code></td>
+        <td><img src="revolve-speed-fast.gif" alt="ab\cd (2.0x)"></td>
       </tr>
     </tbody>
   </table>
