@@ -114,17 +114,13 @@ func main() {
 	}
 	defer f.Close()
 
-	// Build scroll transformers (shared between revolve and non-revolve paths)
-	var scrollTransformers []render.Transformer
-	if scrollX.set {
-		scrollTransformers = append(scrollTransformers, render.ScrollX(scrollX.reverse))
-	}
-	if scrollY.set {
-		scrollTransformers = append(scrollTransformers, render.ScrollY(scrollY.reverse))
+	scroll := render.ScrollConfig{
+		X: scrollX.set, ReverseX: scrollX.reverse,
+		Y: scrollY.set, ReverseY: scrollY.reverse,
 	}
 
 	if revolve.set {
-		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse, speed, scrollTransformers)
+		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse, speed, scroll)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 			os.Exit(1)
@@ -139,10 +135,9 @@ func main() {
 		if rotate.set {
 			transformers = append(transformers, render.Rotate(rotate.reverse))
 		}
-		transformers = append(transformers, scrollTransformers...)
 
-		if len(transformers) > 0 {
-			anim, err := render.RenderGIF(lines, bgColor, transformers, speed)
+		if len(transformers) > 0 || scroll.X || scroll.Y {
+			anim, err := render.RenderGIF(lines, bgColor, transformers, scroll, speed)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 				os.Exit(1)

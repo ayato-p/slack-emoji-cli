@@ -28,7 +28,7 @@ import (
 //
 // One full 360° revolution equals one GIF cycle.
 // When reverse is true, the revolution direction is reversed.
-func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64, transformers []Transformer) (*gif.GIF, error) {
+func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64, scroll ScrollConfig) (*gif.GIF, error) {
 	// Flatten all characters from all lines into one slice (reading order)
 	var chars []string
 	for _, line := range lines {
@@ -135,18 +135,31 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 			offset = -offset
 		}
 
-		ctx.Push()
-		for _, t := range transformers {
-			t(ctx, i, numFrames)
+		if scroll.X || scroll.Y {
+			// Two-pass: render revolve frame to transparent offscreen, then
+			// composite with wrap-around so content re-enters from the opposite edge.
+			offscreen := gg.NewContext(canvasSize, canvasSize)
+			offscreen.SetFontFace(face)
+			offscreen.SetColor(color.White)
+			for k, s := range chars {
+				theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
+				x := cx + r*math.Cos(theta)
+				yOrbit := cy + r*math.Sin(theta)
+				baseline := yOrbit + halfMetricSpan
+				offscreen.DrawStringAnchored(s, x, baseline, 0.5, 0)
+			}
+			compositeWithWrap(ctx, offscreen.Image(), scroll, i, numFrames)
+		} else {
+			ctx.SetFontFace(face)
+			ctx.SetColor(color.White)
+			for k, s := range chars {
+				theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
+				x := cx + r*math.Cos(theta)
+				yOrbit := cy + r*math.Sin(theta)
+				baseline := yOrbit + halfMetricSpan
+				ctx.DrawStringAnchored(s, x, baseline, 0.5, 0)
+			}
 		}
-		for k, s := range chars {
-			theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
-			x := cx + r*math.Cos(theta)
-			yOrbit := cy + r*math.Sin(theta)
-			baseline := yOrbit + halfMetricSpan
-			ctx.DrawStringAnchored(s, x, baseline, 0.5, 0)
-		}
-		ctx.Pop()
 
 		// Convert RGBA frame to paletted image for GIF encoding
 		img := ctx.Image()
