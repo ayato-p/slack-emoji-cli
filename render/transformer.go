@@ -22,3 +22,4 @@ func Rotate(reverse bool) Transformer {
 		ctx.RotateAbout(angle, canvasSize/2, canvasSize/2)
 	}
 }
+

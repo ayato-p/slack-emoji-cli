@@ -67,6 +67,20 @@ jobs:
           ./emo --revolve --speed 0.5 -o preview-images/revolve-speed-slow.gif 'ab\cd'
           ./emo --revolve --speed 2.0 -o preview-images/revolve-speed-fast.gif 'ab\cd'
 
+          # 横スクロールアニメパターン
+          ./emo --scroll-x -o preview-images/scroll-x-single.gif 'LGTM'
+          ./emo --scroll-x -o preview-images/scroll-x-multi.gif '猫に\小判'
+          ./emo --scroll-x=reverse -o preview-images/scroll-x-reverse.gif 'LGTM'
+
+          # 縦スクロールアニメパターン
+          ./emo --scroll-y -o preview-images/scroll-y-single.gif 'LGTM'
+          ./emo --scroll-y -o preview-images/scroll-y-multi.gif '猫に\小判'
+          ./emo --scroll-y=reverse -o preview-images/scroll-y-reverse.gif 'LGTM'
+
+          # スクロール組み合わせパターン
+          ./emo --scroll-x --scroll-y -o preview-images/scroll-xy-single.gif 'LGTM'
+          ./emo --scroll-x --rotate -o preview-images/scroll-x-rotate.gif 'LGTM'
+
       - name: previews ブランチに画像をプッシュ
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -157,6 +171,29 @@ jobs:
               `| \`emo --rotate --speed 2.0 'LGTM'\` | ![LGTM](${base}/rotate-speed-fast.gif) |`,
               `| \`emo --revolve --speed 0.5 'ab\\cd'\` | ![ab\\cd](${base}/revolve-speed-slow.gif) |`,
               `| \`emo --revolve --speed 2.0 'ab\\cd'\` | ![ab\\cd](${base}/revolve-speed-fast.gif) |`,
+              '',
+              '### 横スクロールアニメ (--scroll-x)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --scroll-x 'LGTM'\` | ![LGTM](${base}/scroll-x-single.gif) |`,
+              `| \`emo --scroll-x '猫に\\小判'\` | ![猫に\\小判](${base}/scroll-x-multi.gif) |`,
+              `| \`emo --scroll-x=reverse 'LGTM'\` | ![LGTM](${base}/scroll-x-reverse.gif) |`,
+              '',
+              '### 縦スクロールアニメ (--scroll-y)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --scroll-y 'LGTM'\` | ![LGTM](${base}/scroll-y-single.gif) |`,
+              `| \`emo --scroll-y '猫に\\小判'\` | ![猫に\\小判](${base}/scroll-y-multi.gif) |`,
+              `| \`emo --scroll-y=reverse 'LGTM'\` | ![LGTM](${base}/scroll-y-reverse.gif) |`,
+              '',
+              '### スクロール組み合わせ',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --scroll-x --scroll-y 'LGTM'\` | ![LGTM](${base}/scroll-xy-single.gif) |`,
+              `| \`emo --scroll-x --rotate 'LGTM'\` | ![LGTM](${base}/scroll-x-rotate.gif) |`,
               '',
               '### その他',
               '',

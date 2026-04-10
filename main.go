@@ -54,12 +54,16 @@ func main() {
 	var bgHex string
 	var rotate animFlag
 	var revolve animFlag
+	var scrollX animFlag
+	var scrollY animFlag
 	var speed float64
 
-	flag.StringVar(&output, "o", "", "output file path (default: emoji.png, or emoji.gif with --rotate/--revolve)")
+	flag.StringVar(&output, "o", "", "output file path (default: emoji.png, or emoji.gif with animation flags)")
 	flag.StringVar(&bgHex, "bg", "#1D3557", "background color (hex, e.g. #1D3557)")
 	flag.Var(&rotate, "rotate", "add rotation animation (outputs GIF); use =reverse to reverse direction")
 	flag.Var(&revolve, "revolve", "add revolve animation: characters orbit the canvas center (outputs GIF); use =reverse to reverse direction")
+	flag.Var(&scrollX, "scroll-x", "add horizontal scroll animation (outputs GIF); use =reverse to reverse direction")
+	flag.Var(&scrollY, "scroll-y", "add vertical scroll animation (outputs GIF); use =reverse to reverse direction")
 	flag.Float64Var(&speed, "speed", 1.0, "animation speed multiplier (0.5–2.0, GIF only)")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: emo [options] TEXT")
@@ -87,7 +91,7 @@ func main() {
 
 	// Set default output filename based on animation flags
 	if output == "" {
-		if rotate.set || revolve.set {
+		if rotate.set || revolve.set || scrollX.set || scrollY.set {
 			output = "emoji.gif"
 		} else {
 			output = "emoji.png"
@@ -110,8 +114,13 @@ func main() {
 	}
 	defer f.Close()
 
+	scroll := render.ScrollConfig{
+		X: scrollX.set, ReverseX: scrollX.reverse,
+		Y: scrollY.set, ReverseY: scrollY.reverse,
+	}
+
 	if revolve.set {
-		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse, speed)
+		anim, err := render.RevolveGIF(lines, bgColor, revolve.reverse, speed, scroll)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 			os.Exit(1)
@@ -127,8 +136,8 @@ func main() {
 			transformers = append(transformers, render.Rotate(rotate.reverse))
 		}
 
-		if len(transformers) > 0 {
-			anim, err := render.RenderGIF(lines, bgColor, transformers, speed)
+		if len(transformers) > 0 || scroll.X || scroll.Y {
+			anim, err := render.RenderGIF(lines, bgColor, transformers, scroll, speed)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "render error: %v\n", err)
 				os.Exit(1)
