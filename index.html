@@ -64,7 +64,7 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>d93b5a3</code>
+    &nbsp;|&nbsp; commit: <code>d0064a2</code>
   </p>
 
   <h2>改行含むパターン</h2>
@@ -135,6 +135,27 @@
       <tr>
         <td><code>emo --rotate --bg '#E63946' '完了'</code></td>
         <td><img src="rotate-bg-red.gif" alt="完了"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>公転アニメ (--revolve)</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --revolve 'ab\cd'</code></td>
+        <td><img src="revolve-2x2.gif" alt="ab\cd"></td>
+      </tr>
+      <tr>
+        <td><code>emo --revolve '猫に\小判'</code></td>
+        <td><img src="revolve-multi.gif" alt="猫に\小判"></td>
+      </tr>
+      <tr>
+        <td><code>emo --revolve --bg '#E63946' 'ab\cd'</code></td>
+        <td><img src="revolve-bg-red.gif" alt="ab\cd"></td>
       </tr>
     </tbody>
   </table>
