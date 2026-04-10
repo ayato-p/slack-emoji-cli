@@ -66,6 +66,20 @@ jobs:
           ./emo --revolve --speed 0.5 -o sample-images/revolve-speed-slow.gif 'ab\cd'
           ./emo --revolve --speed 2.0 -o sample-images/revolve-speed-fast.gif 'ab\cd'
 
+          # 横スクロールアニメパターン
+          ./emo --scroll-x -o sample-images/scroll-x-single.gif 'LGTM'
+          ./emo --scroll-x -o sample-images/scroll-x-multi.gif '猫に\小判'
+          ./emo --scroll-x=reverse -o sample-images/scroll-x-reverse.gif 'LGTM'
+
+          # 縦スクロールアニメパターン
+          ./emo --scroll-y -o sample-images/scroll-y-single.gif 'LGTM'
+          ./emo --scroll-y -o sample-images/scroll-y-multi.gif '猫に\小判'
+          ./emo --scroll-y=reverse -o sample-images/scroll-y-reverse.gif 'LGTM'
+
+          # スクロール組み合わせパターン
+          ./emo --scroll-x --scroll-y -o sample-images/scroll-xy-single.gif 'LGTM'
+          ./emo --scroll-x --rotate -o sample-images/scroll-x-rotate.gif 'LGTM'
+
       - name: index.html 生成
         run: |
           SHA="${{ github.sha }}"
@@ -270,6 +284,65 @@ jobs:
                 <tr>
                   <td><code>emo --revolve --speed 2.0 'ab\cd'</code></td>
                   <td><img src="revolve-speed-fast.gif" alt="ab\cd (2.0x)"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>横スクロールアニメ (--scroll-x)</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --scroll-x 'LGTM'</code></td>
+                  <td><img src="scroll-x-single.gif" alt="LGTM"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --scroll-x '猫に\小判'</code></td>
+                  <td><img src="scroll-x-multi.gif" alt="猫に\小判"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --scroll-x=reverse 'LGTM'</code></td>
+                  <td><img src="scroll-x-reverse.gif" alt="LGTM (reverse)"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>縦スクロールアニメ (--scroll-y)</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --scroll-y 'LGTM'</code></td>
+                  <td><img src="scroll-y-single.gif" alt="LGTM"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --scroll-y '猫に\小判'</code></td>
+                  <td><img src="scroll-y-multi.gif" alt="猫に\小判"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --scroll-y=reverse 'LGTM'</code></td>
+                  <td><img src="scroll-y-reverse.gif" alt="LGTM (reverse)"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>スクロール組み合わせ</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --scroll-x --scroll-y 'LGTM'</code></td>
+                  <td><img src="scroll-xy-single.gif" alt="LGTM (xy)"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --scroll-x --rotate 'LGTM'</code></td>
+                  <td><img src="scroll-x-rotate.gif" alt="LGTM (scroll+rotate)"></td>
                 </tr>
               </tbody>
             </table>
