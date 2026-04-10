@@ -28,7 +28,7 @@ import (
 //
 // One full 360° revolution equals one GIF cycle.
 // When reverse is true, the revolution direction is reversed.
-func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64) (*gif.GIF, error) {
+func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64, transformers []Transformer) (*gif.GIF, error) {
 	// Flatten all characters from all lines into one slice (reading order)
 	var chars []string
 	for _, line := range lines {
@@ -135,6 +135,10 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 			offset = -offset
 		}
 
+		ctx.Push()
+		for _, t := range transformers {
+			t(ctx, i, numFrames)
+		}
 		for k, s := range chars {
 			theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
 			x := cx + r*math.Cos(theta)
@@ -142,6 +146,7 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 			baseline := yOrbit + halfMetricSpan
 			ctx.DrawStringAnchored(s, x, baseline, 0.5, 0)
 		}
+		ctx.Pop()
 
 		// Convert RGBA frame to paletted image for GIF encoding
 		img := ctx.Image()
