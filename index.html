@@ -64,7 +64,7 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>df519d2</code>
+    &nbsp;|&nbsp; commit: <code>49c8084</code>
   </p>
 
   <h2>改行含むパターン</h2>
@@ -197,6 +197,65 @@
       <tr>
         <td><code>emo --revolve --speed 2.0 'ab\cd'</code></td>
         <td><img src="revolve-speed-fast.gif" alt="ab\cd (2.0x)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>横スクロールアニメ (--scroll-x)</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --scroll-x 'LGTM'</code></td>
+        <td><img src="scroll-x-single.gif" alt="LGTM"></td>
+      </tr>
+      <tr>
+        <td><code>emo --scroll-x '猫に\小判'</code></td>
+        <td><img src="scroll-x-multi.gif" alt="猫に\小判"></td>
+      </tr>
+      <tr>
+        <td><code>emo --scroll-x=reverse 'LGTM'</code></td>
+        <td><img src="scroll-x-reverse.gif" alt="LGTM (reverse)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>縦スクロールアニメ (--scroll-y)</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --scroll-y 'LGTM'</code></td>
+        <td><img src="scroll-y-single.gif" alt="LGTM"></td>
+      </tr>
+      <tr>
+        <td><code>emo --scroll-y '猫に\小判'</code></td>
+        <td><img src="scroll-y-multi.gif" alt="猫に\小判"></td>
+      </tr>
+      <tr>
+        <td><code>emo --scroll-y=reverse 'LGTM'</code></td>
+        <td><img src="scroll-y-reverse.gif" alt="LGTM (reverse)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>スクロール組み合わせ</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --scroll-x --scroll-y 'LGTM'</code></td>
+        <td><img src="scroll-xy-single.gif" alt="LGTM (xy)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --scroll-x --rotate 'LGTM'</code></td>
+        <td><img src="scroll-x-rotate.gif" alt="LGTM (scroll+rotate)"></td>
       </tr>
     </tbody>
   </table>
