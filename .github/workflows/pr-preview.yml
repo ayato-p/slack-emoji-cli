@@ -48,10 +48,18 @@ jobs:
           ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
           ./emo --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
 
+          # 回転アニメ（リバース）パターン
+          ./emo --rotate=reverse -o preview-images/rotate-reverse-single.gif 'LGTM'
+          ./emo --rotate=reverse -o preview-images/rotate-reverse-multi.gif '猫に\小判'
+
           # 公転アニメパターン
           ./emo --revolve -o preview-images/revolve-2x2.gif 'ab\cd'
           ./emo --revolve -o preview-images/revolve-multi.gif '猫に\小判'
           ./emo --revolve --bg '#E63946' -o preview-images/revolve-bg-red.gif 'ab\cd'
+
+          # 公転アニメ（リバース）パターン
+          ./emo --revolve=reverse -o preview-images/revolve-reverse-2x2.gif 'ab\cd'
+          ./emo --revolve=reverse -o preview-images/revolve-reverse-multi.gif '猫に\小判'
 
       - name: previews ブランチに画像をプッシュ
         run: |
@@ -122,6 +130,8 @@ jobs:
               `| \`emo --rotate 'LGTM'\` | ![LGTM](${base}/rotate-single.gif) |`,
               `| \`emo --rotate '猫に\\小判'\` | ![猫に\\小判](${base}/rotate-multi.gif) |`,
               `| \`emo --rotate --bg '#E63946' '完了'\` | ![完了](${base}/rotate-bg-red.gif) |`,
+              `| \`emo --rotate=reverse 'LGTM'\` | ![LGTM](${base}/rotate-reverse-single.gif) |`,
+              `| \`emo --rotate=reverse '猫に\\小判'\` | ![猫に\\小判](${base}/rotate-reverse-multi.gif) |`,
               '',
               '### 公転アニメ (--revolve)',
               '',
@@ -130,6 +140,8 @@ jobs:
               `| \`emo --revolve 'ab\\cd'\` | ![ab\\cd](${base}/revolve-2x2.gif) |`,
               `| \`emo --revolve '猫に\\小判'\` | ![猫に\\小判](${base}/revolve-multi.gif) |`,
               `| \`emo --revolve --bg '#E63946' 'ab\\cd'\` | ![ab\\cd](${base}/revolve-bg-red.gif) |`,
+              `| \`emo --revolve=reverse 'ab\\cd'\` | ![ab\\cd](${base}/revolve-reverse-2x2.gif) |`,
+              `| \`emo --revolve=reverse '猫に\\小判'\` | ![猫に\\小判](${base}/revolve-reverse-multi.gif) |`,
               '',
               '### その他',
               '',
