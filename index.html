@@ -64,7 +64,7 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>d0064a2</code>
+    &nbsp;|&nbsp; commit: <code>b4508c3</code>
   </p>
 
   <h2>改行含むパターン</h2>
@@ -136,6 +136,14 @@
         <td><code>emo --rotate --bg '#E63946' '完了'</code></td>
         <td><img src="rotate-bg-red.gif" alt="完了"></td>
       </tr>
+      <tr>
+        <td><code>emo --rotate=reverse 'LGTM'</code></td>
+        <td><img src="rotate-reverse-single.gif" alt="LGTM (reverse)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --rotate=reverse '猫に\小判'</code></td>
+        <td><img src="rotate-reverse-multi.gif" alt="猫に\小判 (reverse)"></td>
+      </tr>
     </tbody>
   </table>
 
@@ -156,6 +164,14 @@
       <tr>
         <td><code>emo --revolve --bg '#E63946' 'ab\cd'</code></td>
         <td><img src="revolve-bg-red.gif" alt="ab\cd"></td>
+      </tr>
+      <tr>
+        <td><code>emo --revolve=reverse 'ab\cd'</code></td>
+        <td><img src="revolve-reverse-2x2.gif" alt="ab\cd (reverse)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --revolve=reverse '猫に\小判'</code></td>
+        <td><img src="revolve-reverse-multi.gif" alt="猫に\小判 (reverse)"></td>
       </tr>
     </tbody>
   </table>
