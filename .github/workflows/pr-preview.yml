@@ -48,6 +48,11 @@ jobs:
           ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
           ./emo --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
 
+          # 公転アニメパターン
+          ./emo --revolve -o preview-images/revolve-2x2.gif 'ab\cd'
+          ./emo --revolve -o preview-images/revolve-multi.gif '猫に\小判'
+          ./emo --revolve --bg '#E63946' -o preview-images/revolve-bg-red.gif 'ab\cd'
+
       - name: previews ブランチに画像をプッシュ
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -117,6 +122,14 @@ jobs:
               `| \`emo --rotate 'LGTM'\` | ![LGTM](${base}/rotate-single.gif) |`,
               `| \`emo --rotate '猫に\\小判'\` | ![猫に\\小判](${base}/rotate-multi.gif) |`,
               `| \`emo --rotate --bg '#E63946' '完了'\` | ![完了](${base}/rotate-bg-red.gif) |`,
+              '',
+              '### 公転アニメ (--revolve)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --revolve 'ab\\cd'\` | ![ab\\cd](${base}/revolve-2x2.gif) |`,
+              `| \`emo --revolve '猫に\\小判'\` | ![猫に\\小判](${base}/revolve-multi.gif) |`,
+              `| \`emo --revolve --bg '#E63946' 'ab\\cd'\` | ![ab\\cd](${base}/revolve-bg-red.gif) |`,
               '',
               '### その他',
               '',

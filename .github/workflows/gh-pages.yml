@@ -47,6 +47,11 @@ jobs:
           ./emo --rotate -o sample-images/rotate-multi.gif '猫に\小判'
           ./emo --rotate --bg '#E63946' -o sample-images/rotate-bg-red.gif '完了'
 
+          # 公転アニメパターン
+          ./emo --revolve -o sample-images/revolve-2x2.gif 'ab\cd'
+          ./emo --revolve -o sample-images/revolve-multi.gif '猫に\小判'
+          ./emo --revolve --bg '#E63946' -o sample-images/revolve-bg-red.gif 'ab\cd'
+
       - name: index.html 生成
         run: |
           SHA="${{ github.sha }}"
@@ -189,6 +194,27 @@ jobs:
                 <tr>
                   <td><code>emo --rotate --bg '#E63946' '完了'</code></td>
                   <td><img src="rotate-bg-red.gif" alt="完了"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>公転アニメ (--revolve)</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --revolve 'ab\cd'</code></td>
+                  <td><img src="revolve-2x2.gif" alt="ab\cd"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --revolve '猫に\小判'</code></td>
+                  <td><img src="revolve-multi.gif" alt="猫に\小判"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --revolve --bg '#E63946' 'ab\cd'</code></td>
+                  <td><img src="revolve-bg-red.gif" alt="ab\cd"></td>
                 </tr>
               </tbody>
             </table>
