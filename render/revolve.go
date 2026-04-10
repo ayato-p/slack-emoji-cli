@@ -3,17 +3,14 @@ package render
 import (
 	"image"
 	"image/color"
-	"image/color/palette"
-	"image/draw"
-	"image/gif"
 	"math"
 
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
 )
 
-// RevolveGIF generates an animated GIF where each character revolves around
-// the canvas center. Characters remain upright throughout the animation.
+// newRevolveRenderer returns a closure that renders revolve animation frames.
+// Characters are arranged in a circle around the canvas center and revolve.
 //
 // All characters from all input lines are flattened into a single sequence
 // and placed at uniformly-spaced angles on a circle. Reading order maps to
@@ -26,9 +23,12 @@ import (
 //	a d
 //	b c
 //
-// One full 360° revolution equals one GIF cycle.
-// When reverse is true, the revolution direction is reversed.
-func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64, scroll ScrollConfig) (*gif.GIF, error) {
+// One full 360° revolution equals one animation cycle.
+func newRevolveRenderer(
+	lines []string,
+	bgColor color.Color,
+	effect frameEffect,
+) (func(frame, total int) (image.Image, error), error) {
 	// Flatten all characters from all lines into one slice (reading order)
 	var chars []string
 	for _, line := range lines {
@@ -38,7 +38,13 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 	}
 	N := len(chars)
 	if N == 0 {
-		return nil, nil
+		return func(frame, total int) (image.Image, error) {
+			ctx := gg.NewContext(canvasSize, canvasSize)
+			r, g, b, a := bgColor.RGBA()
+			ctx.SetRGBA(float64(r)/0xffff, float64(g)/0xffff, float64(b)/0xffff, float64(a)/0xffff)
+			ctx.Clear()
+			return ctx.Image(), nil
+		}, nil
 	}
 
 	// For N chars uniformly spaced on a circle of radius r, adjacent char
@@ -94,11 +100,6 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 
 	cx, cy := float64(canvasSize)/2, float64(canvasSize)/2
 
-	actualDelay := int(math.Round(float64(frameDelay) / speed))
-	if actualDelay < 1 {
-		actualDelay = 1
-	}
-
 	// halfMetricSpan converts orbit-center Y back to baseline Y:
 	//   baseline = yOrbit + halfMetricSpan
 	halfMetricSpan := (ascent - descent) / 2
@@ -111,8 +112,9 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 	// but visually clockwise around the rectangle for N=4).
 	const startAngle = -3 * math.Pi / 4
 
-	g := &gif.GIF{LoopCount: 0}
-	for i := 0; i < numFrames; i++ {
+	return func(frame, total int) (image.Image, error) {
+		params := effect(frame, total)
+
 		ctx := gg.NewContext(canvasSize, canvasSize)
 
 		// Fill background
@@ -128,14 +130,10 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 		ctx.SetFontFace(face)
 		ctx.SetColor(color.White)
 
-		// Rotate all positions by one full revolution over numFrames.
-		// Reverse flag flips the direction.
-		offset := float64(i) / float64(numFrames) * 2 * math.Pi
-		if reverse {
-			offset = -offset
-		}
+		// Compute orbit offset from animation parameters.
+		offset := params.RevolveOffset
 
-		if scroll.X || scroll.Y {
+		if params.ScrollX != 0 || params.ScrollY != 0 {
 			// Two-pass: render revolve frame to transparent offscreen, then
 			// composite with wrap-around so content re-enters from the opposite edge.
 			offscreen := gg.NewContext(canvasSize, canvasSize)
@@ -148,10 +146,8 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 				baseline := yOrbit + halfMetricSpan
 				offscreen.DrawStringAnchored(s, x, baseline, 0.5, 0)
 			}
-			compositeWithWrap(ctx, offscreen.Image(), scroll, i, numFrames)
+			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY)
 		} else {
-			ctx.SetFontFace(face)
-			ctx.SetColor(color.White)
 			for k, s := range chars {
 				theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
 				x := cx + r*math.Cos(theta)
@@ -161,13 +157,7 @@ func RevolveGIF(lines []string, bgColor color.Color, reverse bool, speed float64
 			}
 		}
 
-		// Convert RGBA frame to paletted image for GIF encoding
-		img := ctx.Image()
-		paletted := image.NewPaletted(img.Bounds(), palette.Plan9)
-		draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.Point{})
-		g.Image = append(g.Image, paletted)
-		g.Delay = append(g.Delay, actualDelay)
-	}
-
-	return g, nil
+		return ctx.Image(), nil
+	}, nil
 }
+

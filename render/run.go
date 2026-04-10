@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"image/gif"
 	"image/png"
+	"math"
 	"os"
 	"strings"
 
@@ -26,18 +27,43 @@ func Run(cfg config.EmoConfig) error {
 	}
 	defer f.Close()
 
-	scrollXSet, scrollXReverse := animToFlags(cfg.ScrollX)
-	scrollYSet, scrollYReverse := animToFlags(cfg.ScrollY)
-	scroll := ScrollConfig{
-		X: scrollXSet, ReverseX: scrollXReverse,
-		Y: scrollYSet, ReverseY: scrollYReverse,
+	// Compute frame timing based on speed
+	actualDelay := int(math.Round(float64(frameDelay) / cfg.Speed))
+	if actualDelay < 1 {
+		actualDelay = 1
 	}
 
+	// Parse animation flags
+	scrollXSet, scrollXReverse := animToFlags(cfg.ScrollX)
+	scrollYSet, scrollYReverse := animToFlags(cfg.ScrollY)
 	revolveSet, revolveReverse := animToFlags(cfg.Revolve)
 	rotateSet, rotateReverse := animToFlags(cfg.Rotate)
 
+	// Build the per-frame renderer by composing effect options
+	opts := []rendererOption{withLines(lines), withBg(bgColor)}
+
+	if scrollXSet {
+		opts = append(opts, withScrollX(scrollXReverse))
+	}
+	if scrollYSet {
+		opts = append(opts, withScrollY(scrollYReverse))
+	}
+
 	if revolveSet {
-		anim, err := RevolveGIF(lines, bgColor, revolveReverse, cfg.Speed, scroll)
+		opts = append(opts, withRevolve(revolveReverse))
+	} else if rotateSet {
+		opts = append(opts, withRotate(rotateReverse))
+	}
+
+	renderFn, err := buildRenderer(opts...)
+	if err != nil {
+		return fmt.Errorf("render error: %w", err)
+	}
+
+	// Check if animation is needed
+	isAnimated := revolveSet || rotateSet || scrollXSet || scrollYSet
+	if isAnimated {
+		anim, err := composeGIF(renderFn, numFrames, actualDelay)
 		if err != nil {
 			return fmt.Errorf("render error: %w", err)
 		}
@@ -45,27 +71,12 @@ func Run(cfg config.EmoConfig) error {
 			return fmt.Errorf("gif encode error: %w", err)
 		}
 	} else {
-		var transformers []Transformer
-		if rotateSet {
-			transformers = append(transformers, Rotate(rotateReverse))
+		img, err := renderFn(0, 1)
+		if err != nil {
+			return fmt.Errorf("render error: %w", err)
 		}
-
-		if len(transformers) > 0 || scroll.X || scroll.Y {
-			anim, err := RenderGIF(lines, bgColor, transformers, scroll, cfg.Speed)
-			if err != nil {
-				return fmt.Errorf("render error: %w", err)
-			}
-			if err := gif.EncodeAll(f, anim); err != nil {
-				return fmt.Errorf("gif encode error: %w", err)
-			}
-		} else {
-			img, err := Render(lines, bgColor)
-			if err != nil {
-				return fmt.Errorf("render error: %w", err)
-			}
-			if err := png.Encode(f, img); err != nil {
-				return fmt.Errorf("png encode error: %w", err)
-			}
+		if err := png.Encode(f, img); err != nil {
+			return fmt.Errorf("png encode error: %w", err)
 		}
 	}
 
