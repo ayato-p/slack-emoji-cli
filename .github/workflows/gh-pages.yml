@@ -28,62 +28,74 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk
+          fc-cache -fv
+          # デバッグ：利用可能なフォントを確認
+          fc-list | grep -i noto || echo "Noto fonts not found, checking available fonts:"
+          fc-list | head -10
 
       - name: サンプル画像生成
         run: |
           mkdir -p sample-images
+          FONT_PATH=$(find /usr/share/fonts -name "*NotoSansCJK*" -o -name "*NotoSans*JP*" | head -1)
+          FONT_FLAG=""
+          if [ -n "$FONT_PATH" ]; then
+            FONT_FLAG="--font $FONT_PATH"
+            echo "Using font: $FONT_PATH"
+          else
+            echo "Warning: No Noto font found, using system default"
+          fi
 
           # 1行パターン
-          ./emo -o sample-images/single-short.png '猫'
-          ./emo -o sample-images/single-medium.png 'お気持ち'
+          ./emo $FONT_FLAG -o sample-images/single-short.png '猫'
+          ./emo $FONT_FLAG -o sample-images/single-medium.png 'お気持ち'
 
           # 改行含むパターン
-          ./emo -o sample-images/multiline-2.png '猫に\小判'
-          ./emo -o sample-images/multiline-long.png 'ありがとう\ございます'
+          ./emo $FONT_FLAG -o sample-images/multiline-2.png '猫に\小判'
+          ./emo $FONT_FLAG -o sample-images/multiline-long.png 'ありがとう\ございます'
 
           # 背景色が異なるパターン
-          ./emo --bg '#E63946' -o sample-images/bg-red.png 'LGTM'
-          ./emo --bg '#2ECC71' -o sample-images/bg-green.png '完了'
-          ./emo --bg '#F39C12' -o sample-images/bg-orange.png '注意'
-          ./emo --bg '#6C3483' -o sample-images/bg-purple.png 'WIP'
+          ./emo $FONT_FLAG --bg '#E63946' -o sample-images/bg-red.png 'LGTM'
+          ./emo $FONT_FLAG --bg '#2ECC71' -o sample-images/bg-green.png '完了'
+          ./emo $FONT_FLAG --bg '#F39C12' -o sample-images/bg-orange.png '注意'
+          ./emo $FONT_FLAG --bg '#6C3483' -o sample-images/bg-purple.png 'WIP'
 
           # 回転アニメパターン
-          ./emo --rotate -o sample-images/rotate-single.gif 'LGTM'
-          ./emo --rotate -o sample-images/rotate-multi.gif '猫に\小判'
-          ./emo --rotate --bg '#E63946' -o sample-images/rotate-bg-red.gif '完了'
+          ./emo $FONT_FLAG --rotate -o sample-images/rotate-single.gif 'LGTM'
+          ./emo $FONT_FLAG --rotate -o sample-images/rotate-multi.gif '猫に\小判'
+          ./emo $FONT_FLAG --rotate --bg '#E63946' -o sample-images/rotate-bg-red.gif '完了'
 
           # 回転アニメ（リバース）パターン
-          ./emo --rotate=reverse -o sample-images/rotate-reverse-single.gif 'LGTM'
-          ./emo --rotate=reverse -o sample-images/rotate-reverse-multi.gif '猫に\小判'
+          ./emo $FONT_FLAG --rotate=reverse -o sample-images/rotate-reverse-single.gif 'LGTM'
+          ./emo $FONT_FLAG --rotate=reverse -o sample-images/rotate-reverse-multi.gif '猫に\小判'
 
           # 公転アニメパターン
-          ./emo --revolve -o sample-images/revolve-2x2.gif 'ab\cd'
-          ./emo --revolve -o sample-images/revolve-multi.gif '猫に\小判'
-          ./emo --revolve --bg '#E63946' -o sample-images/revolve-bg-red.gif 'ab\cd'
+          ./emo $FONT_FLAG --revolve -o sample-images/revolve-2x2.gif 'ab\cd'
+          ./emo $FONT_FLAG --revolve -o sample-images/revolve-multi.gif '猫に\小判'
+          ./emo $FONT_FLAG --revolve --bg '#E63946' -o sample-images/revolve-bg-red.gif 'ab\cd'
 
           # 公転アニメ（リバース）パターン
-          ./emo --revolve=reverse -o sample-images/revolve-reverse-2x2.gif 'ab\cd'
-          ./emo --revolve=reverse -o sample-images/revolve-reverse-multi.gif '猫に\小判'
+          ./emo $FONT_FLAG --revolve=reverse -o sample-images/revolve-reverse-2x2.gif 'ab\cd'
+          ./emo $FONT_FLAG --revolve=reverse -o sample-images/revolve-reverse-multi.gif '猫に\小判'
 
           # 速度調整パターン
-          ./emo --rotate --speed 0.5 -o sample-images/rotate-speed-slow.gif 'LGTM'
-          ./emo --rotate --speed 2.0 -o sample-images/rotate-speed-fast.gif 'LGTM'
-          ./emo --revolve --speed 0.5 -o sample-images/revolve-speed-slow.gif 'ab\cd'
-          ./emo --revolve --speed 2.0 -o sample-images/revolve-speed-fast.gif 'ab\cd'
+          ./emo $FONT_FLAG --rotate --speed 0.5 -o sample-images/rotate-speed-slow.gif 'LGTM'
+          ./emo $FONT_FLAG --rotate --speed 2.0 -o sample-images/rotate-speed-fast.gif 'LGTM'
+          ./emo $FONT_FLAG --revolve --speed 0.5 -o sample-images/revolve-speed-slow.gif 'ab\cd'
+          ./emo $FONT_FLAG --revolve --speed 2.0 -o sample-images/revolve-speed-fast.gif 'ab\cd'
 
           # 横スクロールアニメパターン
-          ./emo --scroll-x -o sample-images/scroll-x-single.gif 'LGTM'
-          ./emo --scroll-x -o sample-images/scroll-x-multi.gif '猫に\小判'
-          ./emo --scroll-x=reverse -o sample-images/scroll-x-reverse.gif 'LGTM'
+          ./emo $FONT_FLAG --scroll-x -o sample-images/scroll-x-single.gif 'LGTM'
+          ./emo $FONT_FLAG --scroll-x -o sample-images/scroll-x-multi.gif '猫に\小判'
+          ./emo $FONT_FLAG --scroll-x=reverse -o sample-images/scroll-x-reverse.gif 'LGTM'
 
           # 縦スクロールアニメパターン
-          ./emo --scroll-y -o sample-images/scroll-y-single.gif 'LGTM'
-          ./emo --scroll-y -o sample-images/scroll-y-multi.gif '猫に\小判'
-          ./emo --scroll-y=reverse -o sample-images/scroll-y-reverse.gif 'LGTM'
+          ./emo $FONT_FLAG --scroll-y -o sample-images/scroll-y-single.gif 'LGTM'
+          ./emo $FONT_FLAG --scroll-y -o sample-images/scroll-y-multi.gif '猫に\小判'
+          ./emo $FONT_FLAG --scroll-y=reverse -o sample-images/scroll-y-reverse.gif 'LGTM'
 
           # スクロール組み合わせパターン
-          ./emo --scroll-x --scroll-y -o sample-images/scroll-xy-single.gif 'LGTM'
-          ./emo --scroll-x --rotate -o sample-images/scroll-x-rotate.gif 'LGTM'
+          ./emo $FONT_FLAG --scroll-x --scroll-y -o sample-images/scroll-xy-single.gif 'LGTM'
+          ./emo $FONT_FLAG --scroll-x --rotate -o sample-images/scroll-x-rotate.gif 'LGTM'
 
       - name: index.html 生成
         run: |
