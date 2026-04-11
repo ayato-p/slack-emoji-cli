@@ -21,6 +21,12 @@ func Run(cfg config.EmoConfig) error {
 		return fmt.Errorf("invalid bg color %q: %w", cfg.Bg, err)
 	}
 
+	// Load the font (path is already resolved in main.go)
+	font, err := loadFont(cfg.Font)
+	if err != nil {
+		return fmt.Errorf("font error: %w", err)
+	}
+
 	f, err := os.Create(cfg.Out)
 	if err != nil {
 		return fmt.Errorf("cannot create %s: %w", cfg.Out, err)
@@ -55,7 +61,7 @@ func Run(cfg config.EmoConfig) error {
 		opts = append(opts, withRotate(rotateReverse))
 	}
 
-	renderFn, err := buildRenderer(opts...)
+	renderFn, err := buildRenderer(font, opts...)
 	if err != nil {
 		return fmt.Errorf("render error: %w", err)
 	}

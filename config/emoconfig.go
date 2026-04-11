@@ -13,6 +13,7 @@ type EmoConfig struct {
 	Speed   float64 `json:"speed,omitempty"    mapstructure:"speed"`
 	Bg      string  `json:"bg,omitempty"       mapstructure:"bg"`
 	Out     string  `json:"out,omitempty"      mapstructure:"out"`
+	Font    string  `json:"font,omitempty"     mapstructure:"font"`
 }
 
 // SetDefaults はゼロ値フィールドにデフォルト値を設定します。

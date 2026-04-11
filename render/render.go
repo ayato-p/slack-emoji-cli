@@ -7,6 +7,7 @@ import (
 
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 )
 
 const (
@@ -17,13 +18,13 @@ const (
 
 // findFontAndMetrics finds the largest font size where all lines fit within the
 // draw area and returns the font face, ascent, and descent in points.
-func findFontAndMetrics(lines []string) (font.Face, float64, float64, error) {
+func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, float64, error) {
 	ctx := gg.NewContext(canvasSize, canvasSize)
 	fontSize := 120.0
 	var face font.Face
 	for fontSize >= 6 {
 		var err error
-		face, err = loadFace(fontSize)
+		face, err = loadFace(f, fontSize)
 		if err != nil {
 			return nil, 0, 0, err
 		}
@@ -174,16 +175,16 @@ func withRevolve(reverse bool) rendererOption {
 
 // buildRenderer applies all options and returns a per-frame render closure.
 // When called with frame=0, total=1 it produces a static image (no animation).
-func buildRenderer(opts ...rendererOption) (func(frame, total int) (image.Image, error), error) {
+func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total int) (image.Image, error), error) {
 	spec := &rendererSpec{}
 	for _, o := range opts {
 		o(spec)
 	}
 	effect := composeEffects(spec.effects...)
 	if spec.isRevolve {
-		return newRevolveRenderer(spec.lines, spec.bgColor, effect)
+		return newRevolveRenderer(spec.lines, spec.bgColor, effect, f)
 	}
-	return newTextRenderer(spec.lines, spec.bgColor, effect)
+	return newTextRenderer(spec.lines, spec.bgColor, effect, f)
 }
 
 // newTextRenderer returns a closure that renders text with effects (rotation, scrolling, etc.).
@@ -192,8 +193,9 @@ func newTextRenderer(
 	lines []string,
 	bgColor color.Color,
 	effect frameEffect,
+	f *opentype.Font,
 ) (func(frame, total int) (image.Image, error), error) {
-	face, ascent, descent, err := findFontAndMetrics(lines)
+	face, ascent, descent, err := findFontAndMetrics(lines, f)
 	if err != nil {
 		return nil, err
 	}

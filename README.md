@@ -18,6 +18,31 @@ cd slack-emoji-cli
 go build -o emo .
 ```
 
+## フォント
+
+このツールはシステムのフォントを使用します。日本語を含むテキストを生成する場合、以下のいずれかが必要です：
+
+**オプション 1: Noto Sans CJK JP をインストール（推奨）**
+
+```bash
+# Ubuntu/Debian
+sudo apt install fonts-noto-cjk
+
+# macOS (Homebrew)
+brew install font-noto-nerd-font
+
+# または手動でダウンロード
+# https://github.com/google/fonts/tree/main/ofl/notosanscjk
+```
+
+**オプション 2: `--font` で明示的に指定**
+
+```bash
+emo --font /path/to/font.ttf 'テキスト'
+# またはシステムフォント名で検索
+emo --font 'NotoSansCJKJP-Regular' 'テキスト'
+```
+
 ## 使い方
 
 ```bash
@@ -48,6 +73,7 @@ emo '猫'
 |--------|-----------|------|
 | `-o`   | `emoji.png` | 出力ファイルパス（アニメ時は `emoji.gif`） |
 | `--bg` | `#1D3557` | 背景色（`#RGB` / `#RRGGBB` / `#RRGGBBAA` または `"transparent"`） |
+| `--font` | システムのデフォルト | フォントファイルのパス、またはシステムフォント名（例：`DejaVuSans.ttf`） |
 | `--rotate` | — | 回転アニメGIFを生成。`=reverse` で逆方向 |
 | `--revolve` | — | 文字が中心を公転するアニメGIFを生成。`=reverse` で逆方向 |
 | `--scroll-x` | — | 水平スクロールアニメGIFを生成。`=reverse` で逆方向 |
@@ -58,7 +84,7 @@ emo '猫'
 
 - フォーマット: PNG
 - サイズ: 128×128px（Slack推奨サイズ）
-- フォント: Noto Sans JP（バイナリに埋め込み済み、実行環境へのフォントインストール不要）
+- フォント: システムのデフォルトフォント（`--font` で変更可能）
 - フォントサイズ: テキストが収まるよう自動調整
 
 ## ライセンス

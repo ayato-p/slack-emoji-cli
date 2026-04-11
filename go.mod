@@ -3,6 +3,7 @@ module github.com/ayato-p/slack-emoji-cli
 go 1.25.1
 
 require (
+	github.com/flopp/go-findfont v0.1.0 // indirect
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect

@@ -7,15 +7,6 @@ This project is licensed under the MIT License (see LICENSE).
 
 This software includes the following third-party components:
 
-## Noto Sans JP
-
-  Copyright 2014-2021 Adobe (http://www.adobe.com/)
-
-  Licensed under the SIL Open Font License, Version 1.1.
-  See LICENSES/OFL-1.1.txt for the full license text.
-
-  The Noto Sans JP font is embedded in compiled binaries of this software.
-
 ## github.com/fogleman/gg
 
   Copyright (C) 2016 Michael Fogleman

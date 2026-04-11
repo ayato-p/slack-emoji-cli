@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Language**: Go 1.25.1
 - **CLI Framework**: cobra (command structure) + viper (configuration parsing)
 - **Graphics**: `gg` library for 2D graphics, `image/gif` and `image/png` for encoding
-- **Font**: Noto Sans JP (embedded in binary, no external font dependencies)
+- **Font**: System default or user-specified via `--font` flag; uses `github.com/flopp/go-findfont` for font discovery
 - **Release**: goreleaser (multi-platform builds triggered on git tags)
 
 ## Architecture
@@ -48,12 +48,13 @@ PNG (static) or GIF (animated)
   - `rendergif.go`: Animated GIF with transformers (rotate, scroll)
   - `revolve.go`: Specialized revolve animation (characters orbit canvas center)
   - `transformer.go`: Animation transformers (Rotate type + interface)
-  - `font.go`: Font loading and text measurement utilities
+  - `font.go`: Font loading from file paths and text measurement utilities
 
 - **`main.go`**: CLI entry point
   - cobra.Command definition with flag registration
   - `init()`: Sets up flags with mapstructure tags for viper unmarshaling
   - **Key detail**: Animation flags use `NoOptDefVal = "true"` to allow `--rotate` (becomes `"true"`) and `--rotate=reverse` (becomes `"reverse"`)
+  - **Font resolution** (`resolveFont()`): Empty `--font` → pick first system font; explicit path/name → look up via `findfont.Find()`
 
 ### Key Design Patterns
 

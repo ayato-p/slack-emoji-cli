@@ -65,6 +65,7 @@ viper.Unmarshal() → EmoConfig
 `config/emoconfig.go` defines:
 - **EmoConfig struct**: Central configuration representation
   - `Text`: Required positional argument
+  - `Font`: Font file path (resolved in main.go; empty = system default)
   - Animation flags: `Rotate`, `Revolve`, `ScrollX`, `ScrollY` (values: `""` / `"true"` / `"reverse"`)
   - `Speed`: Animation speed multiplier (0.5–2.0)
   - `Bg`: Background color (hex or `"transparent"`)
@@ -109,12 +110,12 @@ composeEffects(effects...) → frameEffect that merges all parameters
 
 ### Renderer Builders (render/render.go, render/revolve.go)
 
-**newTextRenderer(lines, bgColor, effect)** → renderFn
-- Captures font metrics
+**newTextRenderer(lines, bgColor, effect, font)** → renderFn
+- Captures font and metrics (using provided opentype.Font)
 - Per-frame: calls effect(frame, total), applies RotationAngle, renders with ScrollX/Y via `compositeWithWrap`
 
-**newRevolveRenderer(lines, bgColor, effect)** → renderFn
-- Captures orbit geometry, character layout
+**newRevolveRenderer(lines, bgColor, effect, font)** → renderFn
+- Captures font, orbit geometry, character layout (using provided opentype.Font)
 - Per-frame: calls effect(frame, total), applies RevolveOffset to character angles, renders with ScrollX/Y
 
 ### GIF Assembly (render/rendergif.go)
@@ -128,14 +129,15 @@ composeEffects(effects...) → frameEffect that merges all parameters
 
 `render/run.go` implements `Run(EmoConfig)`:
 1. Parse text into lines (split by `\`)
-2. Convert hex color string → RGBA
-3. Convert animation strings to (set, reverse) flags via `animToFlags()`
-4. Build effect function composition via `buildRenderer(opts...)` using Functional Option pattern:
+2. Load font from `cfg.Font` (already resolved to absolute path in main.go)
+3. Convert hex color string → RGBA
+4. Convert animation strings to (set, reverse) flags via `animToFlags()`
+5. Build effect function composition via `buildRenderer(font, opts...)` using Functional Option pattern:
    - `withLines()`, `withBg()`: Store base configuration
    - `withScrollX()`, `withScrollY()`, `withRotate()`, `withRevolve()`: Add effects
-   - `buildRenderer()` dispatches to `newTextRenderer()` or `newRevolveRenderer()` with composed effect
-5. Check if animation needed → call `composeGIF()` or render static frame
-6. Encode output (GIF or PNG) to file
+   - `buildRenderer()` dispatches to `newTextRenderer()` or `newRevolveRenderer()` with font + composed effect
+6. Check if animation needed → call `composeGIF()` or render static frame
+7. Encode output (GIF or PNG) to file
 
 ## CLI Integration
 
@@ -150,6 +152,7 @@ composeEffects(effects...) → frameEffect that merges all parameters
 |---|---|---|---|
 | `-o, --out` | string | "" | Output file path |
 | `--bg` | string | "#1D3557" | Hex color or "transparent" |
+| `--font` | string | "" | Font file path or system font name (empty = auto-select first available) |
 | `--rotate` | string | "" | "" / "true" / "reverse" |
 | `--revolve` | string | "" | "" / "true" / "reverse" |
 | `--scroll-x` | string | "" | "" / "true" / "reverse" |

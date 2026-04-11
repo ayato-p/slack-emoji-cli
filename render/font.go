@@ -1,27 +1,24 @@
 package render
 
 import (
-	_ "embed"
+	"os"
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 )
 
-//go:embed assets/NotoSansJP-Regular.ttf
-var fontBytes []byte
-
-var parsedFont *opentype.Font
-
-func init() {
-	f, err := opentype.Parse(fontBytes)
+// loadFont はファイルパスからフォントを読み込みます。
+func loadFont(path string) (*opentype.Font, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		panic("render: failed to parse embedded font: " + err.Error())
+		return nil, err
 	}
-	parsedFont = f
+	return opentype.Parse(data)
 }
 
-func loadFace(size float64) (font.Face, error) {
-	return opentype.NewFace(parsedFont, &opentype.FaceOptions{
+// loadFace は与えられたフォントから指定サイズのフェイスを作成します。
+func loadFace(f *opentype.Font, size float64) (font.Face, error) {
+	return opentype.NewFace(f, &opentype.FaceOptions{
 		Size: size,
 		DPI:  72,
 	})

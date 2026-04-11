@@ -25,6 +25,11 @@ jobs:
       - name: ビルド
         run: go build -o emo .
 
+      - name: CJK フォントをインストール
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+
       - name: プレビュー画像生成
         run: |
           mkdir -p preview-images

@@ -7,6 +7,7 @@ import (
 
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 )
 
 // newRevolveRenderer returns a closure that renders revolve animation frames.
@@ -28,6 +29,7 @@ func newRevolveRenderer(
 	lines []string,
 	bgColor color.Color,
 	effect frameEffect,
+	f *opentype.Font,
 ) (func(frame, total int) (image.Image, error), error) {
 	// Flatten all characters from all lines into one slice (reading order)
 	var chars []string
@@ -61,12 +63,12 @@ func newRevolveRenderer(
 	var ascent, descent float64
 	tmpCtx := gg.NewContext(canvasSize, canvasSize)
 	for fontSize := 120.0; fontSize >= 6; fontSize-- {
-		f, err := loadFace(fontSize)
+		faceAtSize, err := loadFace(f, fontSize)
 		if err != nil {
 			return nil, err
 		}
-		tmpCtx.SetFontFace(f)
-		m := f.Metrics()
+		tmpCtx.SetFontFace(faceAtSize)
+		m := faceAtSize.Metrics()
 		a := float64(m.Ascent) / 64
 		d := float64(m.Descent) / 64
 
@@ -78,7 +80,7 @@ func newRevolveRenderer(
 			}
 		}
 
-		face = f
+		face = faceAtSize
 		ascent = a
 		descent = d
 		if math.Max(maxW, a+d) <= charMaxLimit {
