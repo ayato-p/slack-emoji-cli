@@ -66,13 +66,14 @@ func runEmo(cmd *cobra.Command, args []string) error {
 
 func resolveFont(spec string) (string, error) {
 	// Empty spec: try CJK-aware font candidates (Noto, IPA, etc.)
+	// Note: findfont.Find() matches by FILE NAME, not font family name
+	// E.g. "NotoSansCJK" matches NotoSansCJK-Regular.ttc (shown as "Noto Sans CJK JP" by fc-list)
 	if spec == "" {
 		candidates := []string{
-			"Noto Sans CJK JP",
-			"Noto Sans JP",
-			"Noto Sans CJK",
-			"IPAGothic",
-			"IPAMincho",
+			"NotoSansCJK",     // Noto Sans CJK (Regular, Bold variants)
+			"NotoSerifCJK",    // Noto Serif CJK
+			"IPAGothic",       // IPA ゴシック
+			"IPAMincho",       // IPA 明朝
 		}
 		for _, candidate := range candidates {
 			path, err := findfont.Find(candidate)
