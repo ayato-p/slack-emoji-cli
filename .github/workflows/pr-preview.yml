@@ -34,66 +34,58 @@ jobs:
       - name: プレビュー画像生成
         run: |
           mkdir -p preview-images
-          FONT_PATH=$(find /usr/share/fonts -name "*NotoSansCJK*" -o -name "*NotoSans*JP*" | head -1)
-          FONT_FLAG=""
-          if [ -n "$FONT_PATH" ]; then
-            FONT_FLAG="--font $FONT_PATH"
-            echo "Using font: $FONT_PATH"
-          else
-            echo "Warning: No Noto font found, using system default"
-          fi
 
           # 1行パターン
-          ./emo $FONT_FLAG -o preview-images/single-short.png '猫'
-          ./emo $FONT_FLAG -o preview-images/single-medium.png 'お気持ち'
+          ./emo -o preview-images/single-short.png '猫'
+          ./emo -o preview-images/single-medium.png 'お気持ち'
 
           # 改行含むパターン
-          ./emo $FONT_FLAG -o preview-images/multiline-2.png '猫に\小判'
-          ./emo $FONT_FLAG -o preview-images/multiline-long.png 'ありがとう\ございます'
+          ./emo -o preview-images/multiline-2.png '猫に\小判'
+          ./emo -o preview-images/multiline-long.png 'ありがとう\ございます'
 
           # 背景色が異なるパターン
-          ./emo $FONT_FLAG --bg '#E63946' -o preview-images/bg-red.png 'LGTM'
-          ./emo $FONT_FLAG --bg '#2ECC71' -o preview-images/bg-green.png '完了'
-          ./emo $FONT_FLAG --bg '#F39C12' -o preview-images/bg-orange.png '注意'
-          ./emo $FONT_FLAG --bg '#6C3483' -o preview-images/bg-purple.png 'WIP'
+          ./emo --bg '#E63946' -o preview-images/bg-red.png 'LGTM'
+          ./emo --bg '#2ECC71' -o preview-images/bg-green.png '完了'
+          ./emo --bg '#F39C12' -o preview-images/bg-orange.png '注意'
+          ./emo --bg '#6C3483' -o preview-images/bg-purple.png 'WIP'
 
           # 回転アニメパターン
-          ./emo $FONT_FLAG --rotate -o preview-images/rotate-single.gif 'LGTM'
-          ./emo $FONT_FLAG --rotate -o preview-images/rotate-multi.gif '猫に\小判'
-          ./emo $FONT_FLAG --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
+          ./emo --rotate -o preview-images/rotate-single.gif 'LGTM'
+          ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
+          ./emo --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
 
           # 回転アニメ（リバース）パターン
-          ./emo $FONT_FLAG --rotate=reverse -o preview-images/rotate-reverse-single.gif 'LGTM'
-          ./emo $FONT_FLAG --rotate=reverse -o preview-images/rotate-reverse-multi.gif '猫に\小判'
+          ./emo --rotate=reverse -o preview-images/rotate-reverse-single.gif 'LGTM'
+          ./emo --rotate=reverse -o preview-images/rotate-reverse-multi.gif '猫に\小判'
 
           # 公転アニメパターン
-          ./emo $FONT_FLAG --revolve -o preview-images/revolve-2x2.gif 'ab\cd'
-          ./emo $FONT_FLAG --revolve -o preview-images/revolve-multi.gif '猫に\小判'
-          ./emo $FONT_FLAG --revolve --bg '#E63946' -o preview-images/revolve-bg-red.gif 'ab\cd'
+          ./emo --revolve -o preview-images/revolve-2x2.gif 'ab\cd'
+          ./emo --revolve -o preview-images/revolve-multi.gif '猫に\小判'
+          ./emo --revolve --bg '#E63946' -o preview-images/revolve-bg-red.gif 'ab\cd'
 
           # 公転アニメ（リバース）パターン
-          ./emo $FONT_FLAG --revolve=reverse -o preview-images/revolve-reverse-2x2.gif 'ab\cd'
-          ./emo $FONT_FLAG --revolve=reverse -o preview-images/revolve-reverse-multi.gif '猫に\小判'
+          ./emo --revolve=reverse -o preview-images/revolve-reverse-2x2.gif 'ab\cd'
+          ./emo --revolve=reverse -o preview-images/revolve-reverse-multi.gif '猫に\小判'
 
           # 速度調整パターン
-          ./emo $FONT_FLAG --rotate --speed 0.5 -o preview-images/rotate-speed-slow.gif 'LGTM'
-          ./emo $FONT_FLAG --rotate --speed 2.0 -o preview-images/rotate-speed-fast.gif 'LGTM'
-          ./emo $FONT_FLAG --revolve --speed 0.5 -o preview-images/revolve-speed-slow.gif 'ab\cd'
-          ./emo $FONT_FLAG --revolve --speed 2.0 -o preview-images/revolve-speed-fast.gif 'ab\cd'
+          ./emo --rotate --speed 0.5 -o preview-images/rotate-speed-slow.gif 'LGTM'
+          ./emo --rotate --speed 2.0 -o preview-images/rotate-speed-fast.gif 'LGTM'
+          ./emo --revolve --speed 0.5 -o preview-images/revolve-speed-slow.gif 'ab\cd'
+          ./emo --revolve --speed 2.0 -o preview-images/revolve-speed-fast.gif 'ab\cd'
 
           # 横スクロールアニメパターン
-          ./emo $FONT_FLAG --scroll-x -o preview-images/scroll-x-single.gif 'LGTM'
-          ./emo $FONT_FLAG --scroll-x -o preview-images/scroll-x-multi.gif '猫に\小判'
-          ./emo $FONT_FLAG --scroll-x=reverse -o preview-images/scroll-x-reverse.gif 'LGTM'
+          ./emo --scroll-x -o preview-images/scroll-x-single.gif 'LGTM'
+          ./emo --scroll-x -o preview-images/scroll-x-multi.gif '猫に\小判'
+          ./emo --scroll-x=reverse -o preview-images/scroll-x-reverse.gif 'LGTM'
 
           # 縦スクロールアニメパターン
-          ./emo $FONT_FLAG --scroll-y -o preview-images/scroll-y-single.gif 'LGTM'
-          ./emo $FONT_FLAG --scroll-y -o preview-images/scroll-y-multi.gif '猫に\小判'
-          ./emo $FONT_FLAG --scroll-y=reverse -o preview-images/scroll-y-reverse.gif 'LGTM'
+          ./emo --scroll-y -o preview-images/scroll-y-single.gif 'LGTM'
+          ./emo --scroll-y -o preview-images/scroll-y-multi.gif '猫に\小判'
+          ./emo --scroll-y=reverse -o preview-images/scroll-y-reverse.gif 'LGTM'
 
           # スクロール組み合わせパターン
-          ./emo $FONT_FLAG --scroll-x --scroll-y -o preview-images/scroll-xy-single.gif 'LGTM'
-          ./emo $FONT_FLAG --scroll-x --rotate -o preview-images/scroll-x-rotate.gif 'LGTM'
+          ./emo --scroll-x --scroll-y -o preview-images/scroll-xy-single.gif 'LGTM'
+          ./emo --scroll-x --rotate -o preview-images/scroll-x-rotate.gif 'LGTM'
 
       - name: previews ブランチに画像をプッシュ
         run: |
