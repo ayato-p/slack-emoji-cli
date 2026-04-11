@@ -30,6 +30,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk
           fc-cache -fv
+          # デバッグ：利用可能なフォントを確認
+          fc-list | grep -i noto || echo "Noto fonts not found, checking available fonts:"
+          fc-list | head -10
 
       - name: プレビュー画像生成
         run: |
