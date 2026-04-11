@@ -70,11 +70,13 @@ func resolveFont(spec string) (string, error) {
 	if spec == "" {
 		// Try candidates in priority order (prefer TTF over TTC)
 		candidates := []string{
-			"DejaVuSans.ttf",     // Fallback: works on most systems
-			"IPAGothic.ttf",
-			"IPAMincho.ttf",
-			"IPAGothic",          // Fallback without extension
+			"fonts-japanese-gothic.ttf",
+			"fonts-japanese-mincho.ttf",
+			"ipag.ttf",
+			"ipam.ttf",
+			"IPAGothic", // Fallback without extension
 			"IPAMincho",
+			"DejaVuSans.ttf", // Fallback: works on most systems
 		}
 
 		for _, candidate := range candidates {
