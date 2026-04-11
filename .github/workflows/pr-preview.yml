@@ -28,7 +28,7 @@ jobs:
       - name: CJK フォントをインストール
         run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-noto-cjk
+          sudo apt-get install -y fonts-noto-cjk fonts-ipafont-gothic
           fc-cache -fv
           # デバッグ：利用可能なフォントを確認
           echo "=== fc-list output ==="
