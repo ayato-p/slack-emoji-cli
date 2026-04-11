@@ -47,9 +47,12 @@ emo '猫'
 | フラグ | デフォルト | 説明 |
 |--------|-----------|------|
 | `-o`   | `emoji.png` | 出力ファイルパス（アニメ時は `emoji.gif`） |
-| `--bg` | `#1D3557` | 背景色（`#RGB` / `#RRGGBB` / `#RRGGBBAA`） |
+| `--bg` | `#1D3557` | 背景色（`#RGB` / `#RRGGBB` / `#RRGGBBAA` または `"transparent"`） |
 | `--rotate` | — | 回転アニメGIFを生成。`=reverse` で逆方向 |
 | `--revolve` | — | 文字が中心を公転するアニメGIFを生成。`=reverse` で逆方向 |
+| `--scroll-x` | — | 水平スクロールアニメGIFを生成。`=reverse` で逆方向 |
+| `--scroll-y` | — | 垂直スクロールアニメGIFを生成。`=reverse` で逆方向 |
+| `--speed` | `1.0` | アニメーション速度倍率（0.5–2.0、GIFのみ） |
 
 ## 出力仕様
 
