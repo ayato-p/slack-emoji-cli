@@ -66,22 +66,29 @@ func runEmo(cmd *cobra.Command, args []string) error {
 
 func resolveFont(spec string) (string, error) {
 	// Empty spec: try CJK-aware font candidates (Noto, IPA, etc.)
-	// Note: findfont.Find() matches by FILE NAME, not font family name
-	// E.g. "NotoSansCJK" matches NotoSansCJK-Regular.ttc (shown as "Noto Sans CJK JP" by fc-list)
+	// Note: Look for TTF/OTF files, not TTC (font collections) since opentype.Parse doesn't support TTC
 	if spec == "" {
+		// Try candidates in priority order (prefer TTF over TTC)
 		candidates := []string{
-			"NotoSansCJK",     // Noto Sans CJK (Regular, Bold variants)
-			"NotoSerifCJK",    // Noto Serif CJK
-			"IPAGothic",       // IPA ゴシック
-			"IPAMincho",       // IPA 明朝
+			"DejaVuSans.ttf",     // Fallback: works on most systems
+			"IPAGothic.ttf",
+			"IPAMincho.ttf",
+			"IPAGothic",          // Fallback without extension
+			"IPAMincho",
 		}
+
 		for _, candidate := range candidates {
 			path, err := findfont.Find(candidate)
 			if err == nil {
+				// Skip TTC files (font collections) - opentype.Parse doesn't support them
+				if strings.HasSuffix(strings.ToLower(path), ".ttc") {
+					continue
+				}
 				return path, nil
 			}
 		}
-		// No suitable CJK font found: require explicit --font
+
+		// No suitable default font found: require explicit --font
 		return "", fmt.Errorf("no suitable default font found on system; please use --font to specify a font file (e.g. --font /path/to/font.ttf)")
 	}
 
