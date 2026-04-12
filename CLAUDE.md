@@ -8,6 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Run**: `./emo [options] TEXT` (e.g., `./emo 'hello'`)  
 **Install**: `go install .` (installs to $GOBIN)
 
+## Permissions
+
+The following commands can be executed automatically without confirmation:
+- `./emo [options]` — Running the emoji CLI tool (with any flags and arguments)
+- `go build`, `go test`, `go install` — Build and test commands
+
 ## Project Overview
 
 `slack-emoji-cli` is a CLI tool that generates Slack emoji images (128×128px PNG/GIF) from text. It supports multiple animation styles (rotate, revolve, scroll-x/y) and customizable backgrounds.
@@ -70,7 +76,7 @@ type EmoConfig struct {
 ```
 
 **Animation Strings**  
-Animation flags store three states as strings: `""` (off), `"true"` (normal), `"reverse"` (reversed). `animToFlags()` in `run.go` converts these to boolean pairs `(set, reverse)`.
+Animation flags store three states as strings: `""` (off), `"true"` (normal), `"reverse"` (reversed). `animToFlags()` in `run.go` converts these to `*bool`: `nil` (off), `&false` (normal), `&true` (reversed).
 
 ## Adding New Features
 
@@ -98,10 +104,8 @@ Animation flags store three states as strings: `""` (off), `"true"` (normal), `"
 
 4. **render/run.go**: Handle in `Run()` dispatcher
    ```go
-   myAnimSet, myAnimReverse := animToFlags(cfg.MyAnim)
-   if myAnimSet {
-       // call RenderMyAnimGIF(lines, bgColor, myAnimReverse, cfg.Speed)
-   }
+   myAnim := animToFlags(cfg.MyAnim)
+   opts = append(opts, withMyAnim(myAnim))  // withMyAnim returns nil if myAnim is nil
    ```
 
 ### Example: Adding a New Configuration Option (Non-Animation)

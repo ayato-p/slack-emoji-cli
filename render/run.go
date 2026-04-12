@@ -40,25 +40,16 @@ func Run(cfg config.EmoConfig) error {
 	}
 
 	// Parse animation flags
-	scrollXSet, scrollXReverse := animToFlags(cfg.ScrollX)
-	scrollYSet, scrollYReverse := animToFlags(cfg.ScrollY)
-	revolveSet, revolveReverse := animToFlags(cfg.Revolve)
-	rotateSet, rotateReverse := animToFlags(cfg.Rotate)
+	scrollX := animToFlags(cfg.ScrollX)
+	scrollY := animToFlags(cfg.ScrollY)
+	revolve := animToFlags(cfg.Revolve)
+	rotate := animToFlags(cfg.Rotate)
 
 	// Build the per-frame renderer by composing effect options
-	opts := []rendererOption{withLines(lines), withBg(bgColor)}
-
-	if scrollXSet {
-		opts = append(opts, withScrollX(scrollXReverse))
-	}
-	if scrollYSet {
-		opts = append(opts, withScrollY(scrollYReverse))
-	}
-
-	if revolveSet {
-		opts = append(opts, withRevolve(revolveReverse))
-	} else if rotateSet {
-		opts = append(opts, withRotate(rotateReverse))
+	opts := []rendererOption{
+		withLines(lines), withBg(bgColor),
+		withScrollX(scrollX), withScrollY(scrollY),
+		withRevolve(revolve), withRotate(rotate),
 	}
 
 	renderFn, err := buildRenderer(font, opts...)
@@ -67,7 +58,7 @@ func Run(cfg config.EmoConfig) error {
 	}
 
 	// Check if animation is needed
-	isAnimated := revolveSet || rotateSet || scrollXSet || scrollYSet
+	isAnimated := scrollX != nil || scrollY != nil || revolve != nil || rotate != nil
 	if isAnimated {
 		anim, err := composeGIF(renderFn, numFrames, actualDelay)
 		if err != nil {
@@ -90,15 +81,18 @@ func Run(cfg config.EmoConfig) error {
 	return nil
 }
 
-// animToFlags はEmoConfigのアニメーション文字列値をset/reverseのペアに変換します。
-func animToFlags(val string) (set, reverse bool) {
+// animToFlags はEmoConfigのアニメーション文字列値を*boolに変換します。
+// nil は未設定、&false は正方向、&true は逆方向を示します。
+func animToFlags(val string) *bool {
 	switch val {
 	case "true":
-		return true, false
+		b := false
+		return &b
 	case "reverse":
-		return true, true
+		b := true
+		return &b
 	}
-	return false, false
+	return nil
 }
 
 // parseHexColor はCSS形式の16進カラー文字列 (#RGB, #RRGGBB, #RRGGBBAA) を解析します。

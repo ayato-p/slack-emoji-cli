@@ -154,22 +154,34 @@ func withBg(c color.Color) rendererOption {
 	return func(s *rendererSpec) { s.bgColor = c }
 }
 
-func withScrollX(reverse bool) rendererOption {
-	return func(s *rendererSpec) { s.effects = append(s.effects, scrollXEffect(reverse)) }
+func withScrollX(reverse *bool) rendererOption {
+	if reverse == nil {
+		return nil
+	}
+	return func(s *rendererSpec) { s.effects = append(s.effects, scrollXEffect(*reverse)) }
 }
 
-func withScrollY(reverse bool) rendererOption {
-	return func(s *rendererSpec) { s.effects = append(s.effects, scrollYEffect(reverse)) }
+func withScrollY(reverse *bool) rendererOption {
+	if reverse == nil {
+		return nil
+	}
+	return func(s *rendererSpec) { s.effects = append(s.effects, scrollYEffect(*reverse)) }
 }
 
-func withRotate(reverse bool) rendererOption {
-	return func(s *rendererSpec) { s.effects = append(s.effects, rotateEffect(reverse)) }
+func withRotate(reverse *bool) rendererOption {
+	if reverse == nil {
+		return nil
+	}
+	return func(s *rendererSpec) { s.effects = append(s.effects, rotateEffect(*reverse)) }
 }
 
-func withRevolve(reverse bool) rendererOption {
+func withRevolve(reverse *bool) rendererOption {
+	if reverse == nil {
+		return nil
+	}
 	return func(s *rendererSpec) {
 		s.isRevolve = true
-		s.effects = append(s.effects, revolveEffect(reverse))
+		s.effects = append(s.effects, revolveEffect(*reverse))
 	}
 }
 
@@ -178,7 +190,9 @@ func withRevolve(reverse bool) rendererOption {
 func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total int) (image.Image, error), error) {
 	spec := &rendererSpec{}
 	for _, o := range opts {
-		o(spec)
+		if o != nil {
+			o(spec)
+		}
 	}
 	effect := composeEffects(spec.effects...)
 	if spec.isRevolve {
