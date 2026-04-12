@@ -64,7 +64,7 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>a607f0a</code>
+    &nbsp;|&nbsp; commit: <code>bc34f05</code>
   </p>
 
   <h2>改行含むパターン</h2>
@@ -311,6 +311,35 @@
       <tr>
         <td><code>emo --scroll-x --rotate 'LGTM'</code></td>
         <td><img src="scroll-x-rotate.gif" alt="LGTM (scroll+rotate)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>パルスアニメ (--pulsing)</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --pulsing 'LGTM'</code></td>
+        <td><img src="pulsing.gif" alt="LGTM"></td>
+      </tr>
+      <tr>
+        <td><code>emo --pulsing '猫に\小判'</code></td>
+        <td><img src="pulsing-multi.gif" alt="猫に\小判"></td>
+      </tr>
+      <tr>
+        <td><code>emo --pulsing=reverse 'LGTM'</code></td>
+        <td><img src="pulsing-reverse.gif" alt="LGTM (reverse)"></td>
+      </tr>
+      <tr>
+        <td><code>emo --pulsing --rotate 'GO'</code></td>
+        <td><img src="pulsing-rotate.gif" alt="GO"></td>
+      </tr>
+      <tr>
+        <td><code>emo --pulsing --font-color gaming 'RGB'</code></td>
+        <td><img src="pulsing-gaming.gif" alt="RGB"></td>
       </tr>
     </tbody>
   </table>
