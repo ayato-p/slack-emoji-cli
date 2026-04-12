@@ -60,7 +60,7 @@ func Run(cfg config.EmoConfig) error {
 	// Check if animation is needed
 	isAnimated := scrollX != nil || scrollY != nil || revolve != nil || rotate != nil
 	if isAnimated {
-		anim, err := composeGIF(renderFn, numFrames, actualDelay)
+		anim, err := composeGIF(renderFn, numFrames, actualDelay, bgColor)
 		if err != nil {
 			return fmt.Errorf("render error: %w", err)
 		}
