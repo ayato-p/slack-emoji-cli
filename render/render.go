@@ -16,6 +16,35 @@ const (
 	drawArea   = canvasSize - padding*2 // 124px
 )
 
+// hsvToRGB converts HSV (h in [0,360), s/v in [0,1]) to color.RGBA.
+func hsvToRGB(h, s, v float64) color.RGBA {
+	h = math.Mod(h, 360)
+	if h < 0 {
+		h += 360
+	}
+	c := v * s
+	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
+	m := v - c
+	var r, g, b float64
+	switch {
+	case h < 60:
+		r, g, b = c, x, 0
+	case h < 120:
+		r, g, b = x, c, 0
+	case h < 180:
+		r, g, b = 0, c, x
+	case h < 240:
+		r, g, b = 0, x, c
+	case h < 300:
+		r, g, b = x, 0, c
+	default:
+		r, g, b = c, 0, x
+	}
+	return color.RGBA{
+		R: uint8((r+m)*255), G: uint8((g+m)*255), B: uint8((b+m)*255), A: 255,
+	}
+}
+
 // findFontAndMetrics finds the largest font size where all lines fit within the
 // draw area and returns the font face, ascent, and descent in points.
 func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, float64, error) {
@@ -137,11 +166,12 @@ func revolveEffect(reverse bool) frameEffect {
 
 // rendererSpec accumulates rendering options before the renderer is built.
 type rendererSpec struct {
-	lines     []string
-	bgColor   color.Color
-	fontColor color.Color
-	effects   []frameEffect
-	isRevolve bool
+	lines       []string
+	bgColor     color.Color
+	fontColor   color.Color
+	colorEffect func(frame, total int) color.Color
+	effects     []frameEffect
+	isRevolve   bool
 }
 
 // rendererOption configures a rendererSpec.
@@ -190,6 +220,17 @@ func withRevolve(reverse *bool) rendererOption {
 	}
 }
 
+func withGaming() rendererOption {
+	return func(s *rendererSpec) {
+		s.colorEffect = func(frame, total int) color.Color {
+			hue := float64(frame) / float64(total) * 360.0
+			// 1-cycle brightness pulse per full rotation: smoother loop transition
+			v := 0.875 + 0.125*math.Sin(2*math.Pi*float64(frame)/float64(total))
+			return hsvToRGB(hue, 1.0, v)
+		}
+	}
+}
+
 // buildRenderer applies all options and returns a per-frame render closure.
 // When called with frame=0, total=1 it produces a static image (no animation).
 func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total int) (image.Image, error), error) {
@@ -201,9 +242,9 @@ func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total 
 	}
 	effect := composeEffects(spec.effects...)
 	if spec.isRevolve {
-		return newRevolveRenderer(spec.lines, spec.bgColor, spec.fontColor, effect, f)
+		return newRevolveRenderer(spec.lines, spec.bgColor, spec.fontColor, spec.colorEffect, effect, f)
 	}
-	return newTextRenderer(spec.lines, spec.bgColor, spec.fontColor, effect, f)
+	return newTextRenderer(spec.lines, spec.bgColor, spec.fontColor, spec.colorEffect, effect, f)
 }
 
 // newTextRenderer returns a closure that renders text with effects (rotation, scrolling, etc.).
@@ -212,6 +253,7 @@ func newTextRenderer(
 	lines []string,
 	bgColor color.Color,
 	fontColor color.Color,
+	colorEffect func(frame, total int) color.Color,
 	effect frameEffect,
 	f *opentype.Font,
 ) (func(frame, total int) (image.Image, error), error) {
@@ -241,13 +283,19 @@ func newTextRenderer(
 		)
 		ctx.Clear()
 
+		// Determine frame-specific font color
+		fc := fontColor
+		if colorEffect != nil {
+			fc = colorEffect(frame, total)
+		}
+
 		if params.ScrollX != 0 || params.ScrollY != 0 {
 			// Two-pass: render content to offscreen, then composite with wrap.
 			// This allows seamless wrapping where content that exits one edge
 			// re-enters from the opposite edge.
 			offscreen := gg.NewContext(canvasSize, canvasSize)
 			offscreen.SetFontFace(face)
-			offscreen.SetColor(fontColor)
+			offscreen.SetColor(fc)
 			offscreen.Push()
 			if params.RotationAngle != 0 {
 				offscreen.RotateAbout(params.RotationAngle, canvasSize/2, canvasSize/2)
@@ -260,7 +308,7 @@ func newTextRenderer(
 			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY)
 		} else {
 			ctx.SetFontFace(face)
-			ctx.SetColor(fontColor)
+			ctx.SetColor(fc)
 			ctx.Push()
 			if params.RotationAngle != 0 {
 				ctx.RotateAbout(params.RotationAngle, canvasSize/2, canvasSize/2)

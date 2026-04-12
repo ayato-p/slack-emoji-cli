@@ -59,6 +59,11 @@ jobs:
           ./emo -c '#0000FF' -o sample-images/font-blue.png 'Blue'
           ./emo --bg '#000000' -c '#FFFFFF' -o sample-images/font-white-on-black.png 'White'
 
+          # ゲーミング色アニメパターン
+          ./emo --font-color gaming -o sample-images/gaming.gif 'Gaming'
+          ./emo --font-color gaming --rotate -o sample-images/gaming-rotate.gif 'GO'
+          ./emo --font-color gaming --revolve -o sample-images/gaming-revolve.gif 'GAME'
+
           # 回転アニメパターン
           ./emo --rotate -o sample-images/rotate-single.gif 'LGTM'
           ./emo --rotate -o sample-images/rotate-multi.gif '猫に\小判'
@@ -252,6 +257,27 @@ jobs:
                   <td>白 on 黒</td>
                   <td><code>emo --bg '#000000' -c '#FFFFFF' 'White'</code></td>
                   <td><img src="font-white-on-black.png" alt="White"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>ゲーミング色アニメ (--font-color gaming)</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --font-color gaming 'Gaming'</code></td>
+                  <td><img src="gaming.gif" alt="Gaming"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --font-color gaming --rotate 'GO'</code></td>
+                  <td><img src="gaming-rotate.gif" alt="GO"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --font-color gaming --revolve 'GAME'</code></td>
+                  <td><img src="gaming-revolve.gif" alt="GAME"></td>
                 </tr>
               </tbody>
             </table>

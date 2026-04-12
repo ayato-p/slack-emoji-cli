@@ -21,9 +21,13 @@ func Run(cfg config.EmoConfig) error {
 		return fmt.Errorf("invalid bg color %q: %w", cfg.Bg, err)
 	}
 
-	fontColor, err := parseHexColor(cfg.FontColor)
-	if err != nil {
-		return fmt.Errorf("invalid font-color %q: %w", cfg.FontColor, err)
+	isGaming := cfg.FontColor == "gaming"
+	var fontColor color.RGBA
+	if !isGaming {
+		fontColor, err = parseHexColor(cfg.FontColor)
+		if err != nil {
+			return fmt.Errorf("invalid font-color %q: %w", cfg.FontColor, err)
+		}
 	}
 
 	// Load the font (path is already resolved in main.go)
@@ -52,18 +56,25 @@ func Run(cfg config.EmoConfig) error {
 
 	// Build the per-frame renderer by composing effect options
 	opts := []rendererOption{
-		withLines(lines), withBg(bgColor), withFontColor(fontColor),
+		withLines(lines), withBg(bgColor),
+	}
+	if isGaming {
+		opts = append(opts, withGaming())
+	} else {
+		opts = append(opts, withFontColor(fontColor))
+	}
+	opts = append(opts,
 		withScrollX(scrollX), withScrollY(scrollY),
 		withRevolve(revolve), withRotate(rotate),
-	}
+	)
 
 	renderFn, err := buildRenderer(font, opts...)
 	if err != nil {
 		return fmt.Errorf("render error: %w", err)
 	}
 
-	// Check if animation is needed
-	isAnimated := scrollX != nil || scrollY != nil || revolve != nil || rotate != nil
+	// Check if animation is needed (gaming always requires animation)
+	isAnimated := isGaming || scrollX != nil || scrollY != nil || revolve != nil || rotate != nil
 	if isAnimated {
 		anim, err := composeGIF(renderFn, numFrames, actualDelay, bgColor)
 		if err != nil {

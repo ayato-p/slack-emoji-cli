@@ -60,6 +60,11 @@ jobs:
           ./emo -c '#0000FF' -o preview-images/font-blue.png 'Blue'
           ./emo --bg '#000000' -c '#FFFFFF' -o preview-images/font-white-on-black.png 'White'
 
+          # ゲーミング色アニメパターン
+          ./emo --font-color gaming -o preview-images/gaming.gif 'Gaming'
+          ./emo --font-color gaming --rotate -o preview-images/gaming-rotate.gif 'GO'
+          ./emo --font-color gaming --revolve -o preview-images/gaming-revolve.gif 'GAME'
+
           # 回転アニメパターン
           ./emo --rotate -o preview-images/rotate-single.gif 'LGTM'
           ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
@@ -169,6 +174,14 @@ jobs:
               `| 緑 (#00FF00) | \`emo -c '#00FF00' 'Green'\` | ![Green](${base}/font-green.png) |`,
               `| 青 (#0000FF) | \`emo -c '#0000FF' 'Blue'\` | ![Blue](${base}/font-blue.png) |`,
               `| 白 on 黒 | \`emo --bg '#000000' -c '#FFFFFF' 'White'\` | ![White](${base}/font-white-on-black.png) |`,
+              '',
+              '### ゲーミング色アニメ (--font-color gaming)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --font-color gaming 'Gaming'\` | ![Gaming](${base}/gaming.gif) |`,
+              `| \`emo --font-color gaming --rotate 'GO'\` | ![GO](${base}/gaming-rotate.gif) |`,
+              `| \`emo --font-color gaming --revolve 'GAME'\` | ![GAME](${base}/gaming-revolve.gif) |`,
               '',
               '### 回転アニメ (--rotate)',
               '',

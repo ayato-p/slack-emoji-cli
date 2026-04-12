@@ -29,6 +29,7 @@ func newRevolveRenderer(
 	lines []string,
 	bgColor color.Color,
 	fontColor color.Color,
+	colorEffect func(frame, total int) color.Color,
 	effect frameEffect,
 	f *opentype.Font,
 ) (func(frame, total int) (image.Image, error), error) {
@@ -130,8 +131,14 @@ func newRevolveRenderer(
 		)
 		ctx.Clear()
 
+		// Determine frame-specific font color
+		fc := fontColor
+		if colorEffect != nil {
+			fc = colorEffect(frame, total)
+		}
+
 		ctx.SetFontFace(face)
-		ctx.SetColor(fontColor)
+		ctx.SetColor(fc)
 
 		// Compute orbit offset from animation parameters.
 		offset := params.RevolveOffset
@@ -141,7 +148,7 @@ func newRevolveRenderer(
 			// composite with wrap-around so content re-enters from the opposite edge.
 			offscreen := gg.NewContext(canvasSize, canvasSize)
 			offscreen.SetFontFace(face)
-			offscreen.SetColor(fontColor)
+			offscreen.SetColor(fc)
 			for k, s := range chars {
 				theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
 				x := cx + r*math.Cos(theta)

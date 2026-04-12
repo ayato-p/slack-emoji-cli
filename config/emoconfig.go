@@ -30,7 +30,7 @@ func (c *EmoConfig) SetDefaults() {
 		c.Speed = 1.0
 	}
 	if c.Out == "" {
-		if c.Rotate != "" || c.Revolve != "" || c.ScrollX != "" || c.ScrollY != "" {
+		if c.Rotate != "" || c.Revolve != "" || c.ScrollX != "" || c.ScrollY != "" || c.FontColor == "gaming" {
 			c.Out = "emoji.gif"
 		} else {
 			c.Out = "emoji.png"
