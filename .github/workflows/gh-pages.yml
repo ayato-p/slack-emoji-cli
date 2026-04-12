@@ -102,6 +102,13 @@ jobs:
           ./emo --scroll-x --scroll-y -o sample-images/scroll-xy-single.gif 'LGTM'
           ./emo --scroll-x --rotate -o sample-images/scroll-x-rotate.gif 'LGTM'
 
+          # パルスアニメパターン
+          ./emo --pulsing -o sample-images/pulsing.gif 'LGTM'
+          ./emo --pulsing -o sample-images/pulsing-multi.gif '猫に\小判'
+          ./emo --pulsing=reverse -o sample-images/pulsing-reverse.gif 'LGTM'
+          ./emo --pulsing --rotate -o sample-images/pulsing-rotate.gif 'GO'
+          ./emo --pulsing --font-color gaming -o sample-images/pulsing-gaming.gif 'RGB'
+
       - name: index.html 生成
         run: |
           SHA="${{ github.sha }}"
@@ -420,6 +427,35 @@ jobs:
                 <tr>
                   <td><code>emo --scroll-x --rotate 'LGTM'</code></td>
                   <td><img src="scroll-x-rotate.gif" alt="LGTM (scroll+rotate)"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>パルスアニメ (--pulsing)</h2>
+            <table>
+              <thead>
+                <tr><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>emo --pulsing 'LGTM'</code></td>
+                  <td><img src="pulsing.gif" alt="LGTM"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --pulsing '猫に\小判'</code></td>
+                  <td><img src="pulsing-multi.gif" alt="猫に\小判"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --pulsing=reverse 'LGTM'</code></td>
+                  <td><img src="pulsing-reverse.gif" alt="LGTM (reverse)"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --pulsing --rotate 'GO'</code></td>
+                  <td><img src="pulsing-rotate.gif" alt="GO"></td>
+                </tr>
+                <tr>
+                  <td><code>emo --pulsing --font-color gaming 'RGB'</code></td>
+                  <td><img src="pulsing-gaming.gif" alt="RGB"></td>
                 </tr>
               </tbody>
             </table>

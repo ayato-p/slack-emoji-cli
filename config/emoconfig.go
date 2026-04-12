@@ -10,6 +10,7 @@ type EmoConfig struct {
 	ScrollY   string  `json:"scroll-y,omitempty" mapstructure:"scroll-y"`
 	Revolve   string  `json:"revolve,omitempty"  mapstructure:"revolve"`
 	Rotate    string  `json:"rotate,omitempty"   mapstructure:"rotate"`
+	Pulsing   string  `json:"pulsing,omitempty"  mapstructure:"pulsing"`
 	Speed     float64 `json:"speed,omitempty"    mapstructure:"speed"`
 	Bg        string  `json:"bg,omitempty"       mapstructure:"bg"`
 	FontColor string  `json:"font-color,omitempty" mapstructure:"font-color"`
@@ -30,7 +31,7 @@ func (c *EmoConfig) SetDefaults() {
 		c.Speed = 1.0
 	}
 	if c.Out == "" {
-		if c.Rotate != "" || c.Revolve != "" || c.ScrollX != "" || c.ScrollY != "" || c.FontColor == "gaming" {
+		if c.Rotate != "" || c.Revolve != "" || c.ScrollX != "" || c.ScrollY != "" || c.Pulsing != "" || c.FontColor == "gaming" {
 			c.Out = "emoji.gif"
 		} else {
 			c.Out = "emoji.png"
@@ -49,6 +50,7 @@ func (c *EmoConfig) Validate() error {
 	for name, val := range map[string]string{
 		"rotate": c.Rotate, "revolve": c.Revolve,
 		"scroll-x": c.ScrollX, "scroll-y": c.ScrollY,
+		"pulsing": c.Pulsing,
 	} {
 		if err := validateAnimValue(name, val); err != nil {
 			return err

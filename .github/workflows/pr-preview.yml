@@ -103,6 +103,13 @@ jobs:
           ./emo --scroll-x --scroll-y -o preview-images/scroll-xy-single.gif 'LGTM'
           ./emo --scroll-x --rotate -o preview-images/scroll-x-rotate.gif 'LGTM'
 
+          # パルスアニメパターン
+          ./emo --pulsing -o preview-images/pulsing.gif 'LGTM'
+          ./emo --pulsing -o preview-images/pulsing-multi.gif '猫に\小判'
+          ./emo --pulsing=reverse -o preview-images/pulsing-reverse.gif 'LGTM'
+          ./emo --pulsing --rotate -o preview-images/pulsing-rotate.gif 'GO'
+          ./emo --pulsing --font-color gaming -o preview-images/pulsing-gaming.gif 'RGB'
+
       - name: previews ブランチに画像をプッシュ
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -234,6 +241,16 @@ jobs:
               '|---------|------|',
               `| \`emo --scroll-x --scroll-y 'LGTM'\` | ![LGTM](${base}/scroll-xy-single.gif) |`,
               `| \`emo --scroll-x --rotate 'LGTM'\` | ![LGTM](${base}/scroll-x-rotate.gif) |`,
+              '',
+              '### パルスアニメ (--pulsing)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --pulsing 'LGTM'\` | ![LGTM](${base}/pulsing.gif) |`,
+              `| \`emo --pulsing '猫に\\小判'\` | ![猫に\\小判](${base}/pulsing-multi.gif) |`,
+              `| \`emo --pulsing=reverse 'LGTM'\` | ![LGTM](${base}/pulsing-reverse.gif) |`,
+              `| \`emo --pulsing --rotate 'GO'\` | ![GO](${base}/pulsing-rotate.gif) |`,
+              `| \`emo --pulsing --font-color gaming 'RGB'\` | ![RGB](${base}/pulsing-gaming.gif) |`,
               '',
               '### その他',
               '',

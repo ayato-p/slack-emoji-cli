@@ -149,6 +149,13 @@ func newRevolveRenderer(
 			offscreen := gg.NewContext(canvasSize, canvasSize)
 			offscreen.SetFontFace(face)
 			offscreen.SetColor(fc)
+			offscreen.Push()
+			if params.SizeScale != 0 {
+				s := 1.0 + params.SizeScale
+				offscreen.Translate(canvasSize/2, canvasSize/2)
+				offscreen.Scale(s, s)
+				offscreen.Translate(-canvasSize/2, -canvasSize/2)
+			}
 			for k, s := range chars {
 				theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
 				x := cx + r*math.Cos(theta)
@@ -156,8 +163,16 @@ func newRevolveRenderer(
 				baseline := yOrbit + halfMetricSpan
 				offscreen.DrawStringAnchored(s, x, baseline, 0.5, 0)
 			}
+			offscreen.Pop()
 			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY)
 		} else {
+			ctx.Push()
+			if params.SizeScale != 0 {
+				s := 1.0 + params.SizeScale
+				ctx.Translate(canvasSize/2, canvasSize/2)
+				ctx.Scale(s, s)
+				ctx.Translate(-canvasSize/2, -canvasSize/2)
+			}
 			for k, s := range chars {
 				theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + offset
 				x := cx + r*math.Cos(theta)
@@ -165,6 +180,7 @@ func newRevolveRenderer(
 				baseline := yOrbit + halfMetricSpan
 				ctx.DrawStringAnchored(s, x, baseline, 0.5, 0)
 			}
+			ctx.Pop()
 		}
 
 		return ctx.Image(), nil

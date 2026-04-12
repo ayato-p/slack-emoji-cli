@@ -98,6 +98,7 @@ type FrameParams struct {
 	RevolveOffset float64 // orbit offset angle in radians; 0 = starting position
 	ScrollX       float64 // horizontal pixel offset for wrap-around; 0 = no scroll
 	ScrollY       float64 // vertical pixel offset for wrap-around; 0 = no scroll
+	SizeScale     float64 // scale delta from 1.0: 0=1x (identity), +1.0=2x, -0.5=0.5x
 }
 
 // frameEffect computes per-frame animation parameters.
@@ -113,6 +114,7 @@ func composeEffects(effects ...frameEffect) frameEffect {
 			p.RevolveOffset += ep.RevolveOffset
 			p.ScrollX += ep.ScrollX
 			p.ScrollY += ep.ScrollY
+			p.SizeScale += ep.SizeScale
 		}
 		return p
 	}
@@ -161,6 +163,26 @@ func revolveEffect(reverse bool) frameEffect {
 			angle = -angle
 		}
 		return FrameParams{RevolveOffset: angle}
+	}
+}
+
+// pulseEffect returns an effect function for scale pulsing.
+// Forward: first half expands 1.0→2.0→1.0, second half shrinks 1.0→0.5→1.0.
+// Reverse: second half (shrink) runs first, then first half (expand).
+func pulseEffect(reverse bool) frameEffect {
+	return func(frame, total int) FrameParams {
+		half := total / 2
+		f := frame
+		if reverse {
+			f = (frame + half) % total
+		}
+		var delta float64
+		if f < half {
+			delta = math.Sin(math.Pi * float64(f) / float64(half)) // 0→+1.0→0
+		} else {
+			delta = -0.5 * math.Sin(math.Pi * float64(f-half) / float64(half)) // 0→-0.5→0
+		}
+		return FrameParams{SizeScale: delta}
 	}
 }
 
@@ -218,6 +240,13 @@ func withRevolve(reverse *bool) rendererOption {
 		s.isRevolve = true
 		s.effects = append(s.effects, revolveEffect(*reverse))
 	}
+}
+
+func withPulse(reverse *bool) rendererOption {
+	if reverse == nil {
+		return nil
+	}
+	return func(s *rendererSpec) { s.effects = append(s.effects, pulseEffect(*reverse)) }
 }
 
 func withGaming() rendererOption {
@@ -297,8 +326,16 @@ func newTextRenderer(
 			offscreen.SetFontFace(face)
 			offscreen.SetColor(fc)
 			offscreen.Push()
-			if params.RotationAngle != 0 {
-				offscreen.RotateAbout(params.RotationAngle, canvasSize/2, canvasSize/2)
+			if params.RotationAngle != 0 || params.SizeScale != 0 {
+				offscreen.Translate(canvasSize/2, canvasSize/2)
+				if params.SizeScale != 0 {
+					s := 1.0 + params.SizeScale
+					offscreen.Scale(s, s)
+				}
+				if params.RotationAngle != 0 {
+					offscreen.Rotate(params.RotationAngle)
+				}
+				offscreen.Translate(-canvasSize/2, -canvasSize/2)
 			}
 			for i, line := range lines {
 				baseline := baseline0 + float64(i)*lineH
@@ -310,8 +347,16 @@ func newTextRenderer(
 			ctx.SetFontFace(face)
 			ctx.SetColor(fc)
 			ctx.Push()
-			if params.RotationAngle != 0 {
-				ctx.RotateAbout(params.RotationAngle, canvasSize/2, canvasSize/2)
+			if params.RotationAngle != 0 || params.SizeScale != 0 {
+				ctx.Translate(canvasSize/2, canvasSize/2)
+				if params.SizeScale != 0 {
+					s := 1.0 + params.SizeScale
+					ctx.Scale(s, s)
+				}
+				if params.RotationAngle != 0 {
+					ctx.Rotate(params.RotationAngle)
+				}
+				ctx.Translate(-canvasSize/2, -canvasSize/2)
 			}
 			for i, line := range lines {
 				baseline := baseline0 + float64(i)*lineH

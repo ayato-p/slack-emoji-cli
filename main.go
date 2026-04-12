@@ -34,9 +34,10 @@ func init() {
 	f.String("revolve", "", "add revolve animation: characters orbit the canvas center (outputs GIF); use =reverse to reverse direction")
 	f.String("scroll-x", "", "add horizontal scroll animation (outputs GIF); use =reverse to reverse direction")
 	f.String("scroll-y", "", "add vertical scroll animation (outputs GIF); use =reverse to reverse direction")
+	f.String("pulsing", "", "add scale pulse animation (outputs GIF); use =reverse to reverse direction")
 	f.Float64("speed", 1.0, "animation speed multiplier (0.5–2.0, GIF only)")
 
-	for _, name := range []string{"rotate", "revolve", "scroll-x", "scroll-y"} {
+	for _, name := range []string{"rotate", "revolve", "scroll-x", "scroll-y", "pulsing"} {
 		f.Lookup(name).NoOptDefVal = "true"
 	}
 

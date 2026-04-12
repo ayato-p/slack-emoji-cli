@@ -53,6 +53,7 @@ func Run(cfg config.EmoConfig) error {
 	scrollY := animToFlags(cfg.ScrollY)
 	revolve := animToFlags(cfg.Revolve)
 	rotate := animToFlags(cfg.Rotate)
+	pulsing := animToFlags(cfg.Pulsing)
 
 	// Build the per-frame renderer by composing effect options
 	opts := []rendererOption{
@@ -66,6 +67,7 @@ func Run(cfg config.EmoConfig) error {
 	opts = append(opts,
 		withScrollX(scrollX), withScrollY(scrollY),
 		withRevolve(revolve), withRotate(rotate),
+		withPulse(pulsing),
 	)
 
 	renderFn, err := buildRenderer(font, opts...)
@@ -74,7 +76,7 @@ func Run(cfg config.EmoConfig) error {
 	}
 
 	// Check if animation is needed (gaming always requires animation)
-	isAnimated := isGaming || scrollX != nil || scrollY != nil || revolve != nil || rotate != nil
+	isAnimated := isGaming || scrollX != nil || scrollY != nil || revolve != nil || rotate != nil || pulsing != nil
 	if isAnimated {
 		anim, err := composeGIF(renderFn, numFrames, actualDelay, bgColor)
 		if err != nil {
