@@ -64,37 +64,32 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>bc34f05</code>
+    &nbsp;|&nbsp; commit: <code>4acd402</code>
   </p>
 
-  <h2>改行含むパターン</h2>
+  <h2>基本テキスト</h2>
   <table>
     <thead>
       <tr><th>コマンド</th><th>出力</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td><code>emo '猫に\小判'</code></td>
-        <td><img src="multiline-2.png" alt="猫に\小判"></td>
+        <td><code>emo 'お気持ち'</code></td>
+        <td><img src="single-medium.png" alt="お気持ち"></td>
       </tr>
       <tr>
-        <td><code>emo 'ありがとう\ございます'</code></td>
-        <td><img src="multiline-long.png" alt="ありがとう\ございます"></td>
+        <td><code>emo '猫に\小判'</code></td>
+        <td><img src="multiline-2.png" alt="猫に\小判"></td>
       </tr>
     </tbody>
   </table>
 
-  <h2>背景色が異なるパターン</h2>
+  <h2>背景色 (--bg)</h2>
   <table>
     <thead>
       <tr><th>背景色</th><th>コマンド</th><th>出力</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td>デフォルト (<code>#1D3557</code>)</td>
-        <td><code>emo 'お気持ち'</code></td>
-        <td><img src="single-medium.png" alt="お気持ち"></td>
-      </tr>
       <tr>
         <td>赤 (<code>#E63946</code>)</td>
         <td><code>emo --bg '#E63946' 'LGTM'</code></td>
@@ -118,17 +113,12 @@
     </tbody>
   </table>
 
-  <h2>フォント色が異なるパターン</h2>
+  <h2>フォント色 (-c / --font-color)</h2>
   <table>
     <thead>
       <tr><th>フォント色</th><th>コマンド</th><th>出力</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td>デフォルト (<code>#FFFFFF</code>)</td>
-        <td><code>emo 'お気持ち'</code></td>
-        <td><img src="single-medium.png" alt="お気持ち"></td>
-      </tr>
       <tr>
         <td>赤 (<code>#FF0000</code>)</td>
         <td><code>emo -c '#FF0000' 'Red'</code></td>
@@ -152,7 +142,7 @@
     </tbody>
   </table>
 
-  <h2>ゲーミング色アニメ (--font-color gaming)</h2>
+  <h2>ゲーミング色 (--font-color gaming)</h2>
   <table>
     <thead>
       <tr><th>コマンド</th><th>出力</th></tr>
@@ -161,14 +151,6 @@
       <tr>
         <td><code>emo --font-color gaming 'Gaming'</code></td>
         <td><img src="gaming.gif" alt="Gaming"></td>
-      </tr>
-      <tr>
-        <td><code>emo --font-color gaming --rotate 'GO'</code></td>
-        <td><img src="gaming-rotate.gif" alt="GO"></td>
-      </tr>
-      <tr>
-        <td><code>emo --font-color gaming --revolve 'GAME'</code></td>
-        <td><img src="gaming-revolve.gif" alt="GAME"></td>
       </tr>
     </tbody>
   </table>
@@ -184,20 +166,8 @@
         <td><img src="rotate-single.gif" alt="LGTM"></td>
       </tr>
       <tr>
-        <td><code>emo --rotate '猫に\小判'</code></td>
-        <td><img src="rotate-multi.gif" alt="猫に\小判"></td>
-      </tr>
-      <tr>
-        <td><code>emo --rotate --bg '#E63946' '完了'</code></td>
-        <td><img src="rotate-bg-red.gif" alt="完了"></td>
-      </tr>
-      <tr>
         <td><code>emo --rotate=reverse 'LGTM'</code></td>
         <td><img src="rotate-reverse-single.gif" alt="LGTM (reverse)"></td>
-      </tr>
-      <tr>
-        <td><code>emo --rotate=reverse '猫に\小判'</code></td>
-        <td><img src="rotate-reverse-multi.gif" alt="猫に\小判 (reverse)"></td>
       </tr>
     </tbody>
   </table>
@@ -213,20 +183,8 @@
         <td><img src="revolve-2x2.gif" alt="ab\cd"></td>
       </tr>
       <tr>
-        <td><code>emo --revolve '猫に\小判'</code></td>
-        <td><img src="revolve-multi.gif" alt="猫に\小判"></td>
-      </tr>
-      <tr>
-        <td><code>emo --revolve --bg '#E63946' 'ab\cd'</code></td>
-        <td><img src="revolve-bg-red.gif" alt="ab\cd"></td>
-      </tr>
-      <tr>
         <td><code>emo --revolve=reverse 'ab\cd'</code></td>
         <td><img src="revolve-reverse-2x2.gif" alt="ab\cd (reverse)"></td>
-      </tr>
-      <tr>
-        <td><code>emo --revolve=reverse '猫に\小判'</code></td>
-        <td><img src="revolve-reverse-multi.gif" alt="猫に\小判 (reverse)"></td>
       </tr>
     </tbody>
   </table>
@@ -245,18 +203,10 @@
         <td><code>emo --rotate --speed 2.0 'LGTM'</code></td>
         <td><img src="rotate-speed-fast.gif" alt="LGTM (2.0x)"></td>
       </tr>
-      <tr>
-        <td><code>emo --revolve --speed 0.5 'ab\cd'</code></td>
-        <td><img src="revolve-speed-slow.gif" alt="ab\cd (0.5x)"></td>
-      </tr>
-      <tr>
-        <td><code>emo --revolve --speed 2.0 'ab\cd'</code></td>
-        <td><img src="revolve-speed-fast.gif" alt="ab\cd (2.0x)"></td>
-      </tr>
     </tbody>
   </table>
 
-  <h2>横スクロールアニメ (--scroll-x)</h2>
+  <h2>横スクロール (--scroll-x)</h2>
   <table>
     <thead>
       <tr><th>コマンド</th><th>出力</th></tr>
@@ -267,17 +217,13 @@
         <td><img src="scroll-x-single.gif" alt="LGTM"></td>
       </tr>
       <tr>
-        <td><code>emo --scroll-x '猫に\小判'</code></td>
-        <td><img src="scroll-x-multi.gif" alt="猫に\小判"></td>
-      </tr>
-      <tr>
         <td><code>emo --scroll-x=reverse 'LGTM'</code></td>
         <td><img src="scroll-x-reverse.gif" alt="LGTM (reverse)"></td>
       </tr>
     </tbody>
   </table>
 
-  <h2>縦スクロールアニメ (--scroll-y)</h2>
+  <h2>縦スクロール (--scroll-y)</h2>
   <table>
     <thead>
       <tr><th>コマンド</th><th>出力</th></tr>
@@ -288,17 +234,30 @@
         <td><img src="scroll-y-single.gif" alt="LGTM"></td>
       </tr>
       <tr>
-        <td><code>emo --scroll-y '猫に\小判'</code></td>
-        <td><img src="scroll-y-multi.gif" alt="猫に\小判"></td>
-      </tr>
-      <tr>
         <td><code>emo --scroll-y=reverse 'LGTM'</code></td>
         <td><img src="scroll-y-reverse.gif" alt="LGTM (reverse)"></td>
       </tr>
     </tbody>
   </table>
 
-  <h2>スクロール組み合わせ</h2>
+  <h2>パルス (--pulsing)</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo --pulsing 'LGTM'</code></td>
+        <td><img src="pulsing.gif" alt="LGTM"></td>
+      </tr>
+      <tr>
+        <td><code>emo --pulsing=reverse 'LGTM'</code></td>
+        <td><img src="pulsing-reverse.gif" alt="LGTM (reverse)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>アニメーション組み合わせ</h2>
   <table>
     <thead>
       <tr><th>コマンド</th><th>出力</th></tr>
@@ -312,47 +271,42 @@
         <td><code>emo --scroll-x --rotate 'LGTM'</code></td>
         <td><img src="scroll-x-rotate.gif" alt="LGTM (scroll+rotate)"></td>
       </tr>
-    </tbody>
-  </table>
-
-  <h2>パルスアニメ (--pulsing)</h2>
-  <table>
-    <thead>
-      <tr><th>コマンド</th><th>出力</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>emo --pulsing 'LGTM'</code></td>
-        <td><img src="pulsing.gif" alt="LGTM"></td>
-      </tr>
-      <tr>
-        <td><code>emo --pulsing '猫に\小判'</code></td>
-        <td><img src="pulsing-multi.gif" alt="猫に\小判"></td>
-      </tr>
-      <tr>
-        <td><code>emo --pulsing=reverse 'LGTM'</code></td>
-        <td><img src="pulsing-reverse.gif" alt="LGTM (reverse)"></td>
-      </tr>
       <tr>
         <td><code>emo --pulsing --rotate 'GO'</code></td>
         <td><img src="pulsing-rotate.gif" alt="GO"></td>
       </tr>
       <tr>
-        <td><code>emo --pulsing --font-color gaming 'RGB'</code></td>
-        <td><img src="pulsing-gaming.gif" alt="RGB"></td>
+        <td><code>emo --pulsing --scroll-x 'LGTM'</code></td>
+        <td><img src="pulsing-scroll-x.gif" alt="LGTM"></td>
       </tr>
     </tbody>
   </table>
 
-  <h2>その他</h2>
+  <h2>カラー × アニメーション</h2>
   <table>
     <thead>
       <tr><th>コマンド</th><th>出力</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td><code>emo '猫'</code></td>
-        <td><img src="single-short.png" alt="猫"></td>
+        <td><code>emo --rotate --bg '#E63946' '完了'</code></td>
+        <td><img src="rotate-bg-red.gif" alt="完了"></td>
+      </tr>
+      <tr>
+        <td><code>emo --rotate -c '#FF0000' 'LGTM'</code></td>
+        <td><img src="rotate-font-red.gif" alt="LGTM"></td>
+      </tr>
+      <tr>
+        <td><code>emo --font-color gaming --rotate 'GO'</code></td>
+        <td><img src="gaming-rotate.gif" alt="GO"></td>
+      </tr>
+      <tr>
+        <td><code>emo --font-color gaming --revolve 'GAME'</code></td>
+        <td><img src="gaming-revolve.gif" alt="GAME"></td>
+      </tr>
+      <tr>
+        <td><code>emo --pulsing --font-color gaming 'RGB'</code></td>
+        <td><img src="pulsing-gaming.gif" alt="RGB"></td>
       </tr>
     </tbody>
   </table>
