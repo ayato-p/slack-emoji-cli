@@ -131,6 +131,34 @@ For a simple option like `--blur`:
 
 4. **render/**: Modify rendering functions to use the new config field
 
+### After Adding Any New Option: Update GitHub Actions Samples
+
+When adding any new CLI option (animation, color, or parameter), you **must** update the GitHub Actions workflows to generate sample images. This ensures both `gh-pages` and PR preview include the new feature.
+
+**Always add samples to both files:**
+
+1. **`.github/workflows/gh-pages.yml`** — Sample generation + index.html update
+   - Add generation command in the appropriate section (e.g., after background color samples)
+   - Add corresponding row(s) to the `index.html` table section
+   - Example: For `--font-color`, add:
+     ```bash
+     ./emo -c '#FF0000' -o sample-images/font-red.png 'Red'
+     ```
+   - And add an HTML table row with the command and image reference
+
+2. **`.github/workflows/pr-preview.yml`** — Same samples + PR comment update
+   - Add the same generation commands to the "プレビュー画像生成" step
+   - Add corresponding markdown table rows to the GitHub script section
+   - Example table row:
+     ```javascript
+     `| 赤 (#FF0000) | \`emo -c '#FF0000' 'Red'\` | ![Red](${base}/font-red.png) |`,
+     ```
+
+**Pattern to follow:**
+- Group related samples (e.g., all color variations together)
+- Include at least 3–4 representative examples
+- Use consistent image filenames: `{feature}-{variant}.{png|gif}`
+
 ## Configuration
 
 **Output Filename Defaults** (set in `config.SetDefaults()`):

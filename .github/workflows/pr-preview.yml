@@ -54,6 +54,12 @@ jobs:
           ./emo --bg '#F39C12' -o preview-images/bg-orange.png '注意'
           ./emo --bg '#6C3483' -o preview-images/bg-purple.png 'WIP'
 
+          # フォント色が異なるパターン
+          ./emo -c '#FF0000' -o preview-images/font-red.png 'Red'
+          ./emo -c '#00FF00' -o preview-images/font-green.png 'Green'
+          ./emo -c '#0000FF' -o preview-images/font-blue.png 'Blue'
+          ./emo --bg '#000000' -c '#FFFFFF' -o preview-images/font-white-on-black.png 'White'
+
           # 回転アニメパターン
           ./emo --rotate -o preview-images/rotate-single.gif 'LGTM'
           ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
@@ -153,6 +159,16 @@ jobs:
               `| 緑 (#2ECC71) | \`emo --bg '#2ECC71' '完了'\` | ![完了](${base}/bg-green.png) |`,
               `| オレンジ (#F39C12) | \`emo --bg '#F39C12' '注意'\` | ![注意](${base}/bg-orange.png) |`,
               `| 紫 (#6C3483) | \`emo --bg '#6C3483' 'WIP'\` | ![WIP](${base}/bg-purple.png) |`,
+              '',
+              '### フォント色が異なるパターン',
+              '',
+              '| フォント色 | コマンド | 出力 |',
+              '|-----------|---------|------|',
+              `| デフォルト (#FFFFFF) | \`emo 'お気持ち'\` | ![お気持ち](${base}/single-medium.png) |`,
+              `| 赤 (#FF0000) | \`emo -c '#FF0000' 'Red'\` | ![Red](${base}/font-red.png) |`,
+              `| 緑 (#00FF00) | \`emo -c '#00FF00' 'Green'\` | ![Green](${base}/font-green.png) |`,
+              `| 青 (#0000FF) | \`emo -c '#0000FF' 'Blue'\` | ![Blue](${base}/font-blue.png) |`,
+              `| 白 on 黒 | \`emo --bg '#000000' -c '#FFFFFF' 'White'\` | ![White](${base}/font-white-on-black.png) |`,
               '',
               '### 回転アニメ (--rotate)',
               '',

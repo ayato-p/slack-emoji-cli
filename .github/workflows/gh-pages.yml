@@ -53,6 +53,12 @@ jobs:
           ./emo --bg '#F39C12' -o sample-images/bg-orange.png '注意'
           ./emo --bg '#6C3483' -o sample-images/bg-purple.png 'WIP'
 
+          # フォント色が異なるパターン
+          ./emo -c '#FF0000' -o sample-images/font-red.png 'Red'
+          ./emo -c '#00FF00' -o sample-images/font-green.png 'Green'
+          ./emo -c '#0000FF' -o sample-images/font-blue.png 'Blue'
+          ./emo --bg '#000000' -c '#FFFFFF' -o sample-images/font-white-on-black.png 'White'
+
           # 回転アニメパターン
           ./emo --rotate -o sample-images/rotate-single.gif 'LGTM'
           ./emo --rotate -o sample-images/rotate-multi.gif '猫に\小判'
@@ -212,6 +218,40 @@ jobs:
                   <td>紫 (<code>#6C3483</code>)</td>
                   <td><code>emo --bg '#6C3483' 'WIP'</code></td>
                   <td><img src="bg-purple.png" alt="WIP"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2>フォント色が異なるパターン</h2>
+            <table>
+              <thead>
+                <tr><th>フォント色</th><th>コマンド</th><th>出力</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>デフォルト (<code>#FFFFFF</code>)</td>
+                  <td><code>emo 'お気持ち'</code></td>
+                  <td><img src="single-medium.png" alt="お気持ち"></td>
+                </tr>
+                <tr>
+                  <td>赤 (<code>#FF0000</code>)</td>
+                  <td><code>emo -c '#FF0000' 'Red'</code></td>
+                  <td><img src="font-red.png" alt="Red"></td>
+                </tr>
+                <tr>
+                  <td>緑 (<code>#00FF00</code>)</td>
+                  <td><code>emo -c '#00FF00' 'Green'</code></td>
+                  <td><img src="font-green.png" alt="Green"></td>
+                </tr>
+                <tr>
+                  <td>青 (<code>#0000FF</code>)</td>
+                  <td><code>emo -c '#0000FF' 'Blue'</code></td>
+                  <td><img src="font-blue.png" alt="Blue"></td>
+                </tr>
+                <tr>
+                  <td>白 on 黒</td>
+                  <td><code>emo --bg '#000000' -c '#FFFFFF' 'White'</code></td>
+                  <td><img src="font-white-on-black.png" alt="White"></td>
                 </tr>
               </tbody>
             </table>

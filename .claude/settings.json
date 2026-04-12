@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./emo:*)",
+      "Bash(go:*)"
+    ]
+  },
+  "hooks": {
+    "FileChanged": [
+      {
+        "matcher": "config/emoconfig.go",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/update-workflows.sh",
+            "statusMessage": "💡 GitHub Actions ワークフロー更新チェック",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

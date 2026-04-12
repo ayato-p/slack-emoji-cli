@@ -61,6 +61,12 @@ emo -o /tmp/my-emoji.png '猫に\小判'
 # 背景色を変える
 emo --bg '#E63946' 'お気持ち'
 
+# フォント色を変える
+emo -c '#FF0000' 'お気持ち'
+
+# 背景色とフォント色を変える
+emo --bg '#000000' -c '#FFFFFF' 'コントラスト'
+
 # 1行
 emo '猫'
 ```
@@ -73,6 +79,7 @@ emo '猫'
 |--------|-----------|------|
 | `-o`   | `emoji.png` | 出力ファイルパス（アニメ時は `emoji.gif`） |
 | `--bg` | `#1D3557` | 背景色（`#RGB` / `#RRGGBB` / `#RRGGBBAA` または `"transparent"`） |
+| `-c`, `--font-color` | `#FFFFFF` | フォント色（`#RGB` / `#RRGGBB` / `#RRGGBBAA` または `"transparent"`） |
 | `--font` | システムのデフォルト | フォントファイルのパス、またはシステムフォント名（例：`DejaVuSans.ttf`） |
 | `--rotate` | — | 回転アニメGIFを生成。`=reverse` で逆方向 |
 | `--revolve` | — | 文字が中心を公転するアニメGIFを生成。`=reverse` で逆方向 |

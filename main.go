@@ -28,6 +28,7 @@ func init() {
 	f := rootCmd.Flags()
 	f.StringP("out", "o", "", "output file path (default: emoji.png, or emoji.gif with animation flags)")
 	f.String("bg", "#1D3557", `background color (hex e.g. #1D3557, or "transparent")`)
+	f.StringP("font-color", "c", "", `font color (hex e.g. #FFFFFF, or "transparent")`)
 	f.String("font", "", "font file path or font file name to search in system fonts (e.g. NotoSansJP-Regular.ttf)")
 	f.String("rotate", "", "add rotation animation (outputs GIF); use =reverse to reverse direction")
 	f.String("revolve", "", "add revolve animation: characters orbit the canvas center (outputs GIF); use =reverse to reverse direction")

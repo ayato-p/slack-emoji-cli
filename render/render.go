@@ -139,6 +139,7 @@ func revolveEffect(reverse bool) frameEffect {
 type rendererSpec struct {
 	lines     []string
 	bgColor   color.Color
+	fontColor color.Color
 	effects   []frameEffect
 	isRevolve bool
 }
@@ -152,6 +153,10 @@ func withLines(lines []string) rendererOption {
 
 func withBg(c color.Color) rendererOption {
 	return func(s *rendererSpec) { s.bgColor = c }
+}
+
+func withFontColor(c color.Color) rendererOption {
+	return func(s *rendererSpec) { s.fontColor = c }
 }
 
 func withScrollX(reverse *bool) rendererOption {
@@ -196,9 +201,9 @@ func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total 
 	}
 	effect := composeEffects(spec.effects...)
 	if spec.isRevolve {
-		return newRevolveRenderer(spec.lines, spec.bgColor, effect, f)
+		return newRevolveRenderer(spec.lines, spec.bgColor, spec.fontColor, effect, f)
 	}
-	return newTextRenderer(spec.lines, spec.bgColor, effect, f)
+	return newTextRenderer(spec.lines, spec.bgColor, spec.fontColor, effect, f)
 }
 
 // newTextRenderer returns a closure that renders text with effects (rotation, scrolling, etc.).
@@ -206,6 +211,7 @@ func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total 
 func newTextRenderer(
 	lines []string,
 	bgColor color.Color,
+	fontColor color.Color,
 	effect frameEffect,
 	f *opentype.Font,
 ) (func(frame, total int) (image.Image, error), error) {
@@ -241,7 +247,7 @@ func newTextRenderer(
 			// re-enters from the opposite edge.
 			offscreen := gg.NewContext(canvasSize, canvasSize)
 			offscreen.SetFontFace(face)
-			offscreen.SetColor(color.White)
+			offscreen.SetColor(fontColor)
 			offscreen.Push()
 			if params.RotationAngle != 0 {
 				offscreen.RotateAbout(params.RotationAngle, canvasSize/2, canvasSize/2)
@@ -254,7 +260,7 @@ func newTextRenderer(
 			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY)
 		} else {
 			ctx.SetFontFace(face)
-			ctx.SetColor(color.White)
+			ctx.SetColor(fontColor)
 			ctx.Push()
 			if params.RotationAngle != 0 {
 				ctx.RotateAbout(params.RotationAngle, canvasSize/2, canvasSize/2)

@@ -5,15 +5,16 @@ import "fmt"
 // EmoConfig はすべての設定を保持する中間表現です。
 // CLIフラグからもJSONファイルからも同じ構造体に変換できます。
 type EmoConfig struct {
-	Text    string  `json:"text"               mapstructure:"text"`
-	ScrollX string  `json:"scroll-x,omitempty" mapstructure:"scroll-x"`
-	ScrollY string  `json:"scroll-y,omitempty" mapstructure:"scroll-y"`
-	Revolve string  `json:"revolve,omitempty"  mapstructure:"revolve"`
-	Rotate  string  `json:"rotate,omitempty"   mapstructure:"rotate"`
-	Speed   float64 `json:"speed,omitempty"    mapstructure:"speed"`
-	Bg      string  `json:"bg,omitempty"       mapstructure:"bg"`
-	Out     string  `json:"out,omitempty"      mapstructure:"out"`
-	Font    string  `json:"font,omitempty"     mapstructure:"font"`
+	Text      string  `json:"text"               mapstructure:"text"`
+	ScrollX   string  `json:"scroll-x,omitempty" mapstructure:"scroll-x"`
+	ScrollY   string  `json:"scroll-y,omitempty" mapstructure:"scroll-y"`
+	Revolve   string  `json:"revolve,omitempty"  mapstructure:"revolve"`
+	Rotate    string  `json:"rotate,omitempty"   mapstructure:"rotate"`
+	Speed     float64 `json:"speed,omitempty"    mapstructure:"speed"`
+	Bg        string  `json:"bg,omitempty"       mapstructure:"bg"`
+	FontColor string  `json:"font-color,omitempty" mapstructure:"font-color"`
+	Out       string  `json:"out,omitempty"      mapstructure:"out"`
+	Font      string  `json:"font,omitempty"     mapstructure:"font"`
 }
 
 // SetDefaults はゼロ値フィールドにデフォルト値を設定します。
@@ -21,6 +22,9 @@ type EmoConfig struct {
 func (c *EmoConfig) SetDefaults() {
 	if c.Bg == "" {
 		c.Bg = "#1D3557"
+	}
+	if c.FontColor == "" {
+		c.FontColor = "#FFFFFF"
 	}
 	if c.Speed == 0 {
 		c.Speed = 1.0

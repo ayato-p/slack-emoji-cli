@@ -21,6 +21,11 @@ func Run(cfg config.EmoConfig) error {
 		return fmt.Errorf("invalid bg color %q: %w", cfg.Bg, err)
 	}
 
+	fontColor, err := parseHexColor(cfg.FontColor)
+	if err != nil {
+		return fmt.Errorf("invalid font-color %q: %w", cfg.FontColor, err)
+	}
+
 	// Load the font (path is already resolved in main.go)
 	font, err := loadFont(cfg.Font)
 	if err != nil {
@@ -47,7 +52,7 @@ func Run(cfg config.EmoConfig) error {
 
 	// Build the per-frame renderer by composing effect options
 	opts := []rendererOption{
-		withLines(lines), withBg(bgColor),
+		withLines(lines), withBg(bgColor), withFontColor(fontColor),
 		withScrollX(scrollX), withScrollY(scrollY),
 		withRevolve(revolve), withRotate(rotate),
 	}
