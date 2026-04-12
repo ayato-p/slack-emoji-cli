@@ -40,74 +40,60 @@ jobs:
         run: |
           mkdir -p preview-images
 
-          # 1行パターン
-          ./emo -o preview-images/single-short.png '猫'
+          # 基本テキスト
           ./emo -o preview-images/single-medium.png 'お気持ち'
-
-          # 改行含むパターン
           ./emo -o preview-images/multiline-2.png '猫に\小判'
-          ./emo -o preview-images/multiline-long.png 'ありがとう\ございます'
 
-          # 背景色が異なるパターン
+          # 背景色
           ./emo --bg '#E63946' -o preview-images/bg-red.png 'LGTM'
           ./emo --bg '#2ECC71' -o preview-images/bg-green.png '完了'
           ./emo --bg '#F39C12' -o preview-images/bg-orange.png '注意'
           ./emo --bg '#6C3483' -o preview-images/bg-purple.png 'WIP'
 
-          # フォント色が異なるパターン
+          # フォント色
           ./emo -c '#FF0000' -o preview-images/font-red.png 'Red'
           ./emo -c '#00FF00' -o preview-images/font-green.png 'Green'
           ./emo -c '#0000FF' -o preview-images/font-blue.png 'Blue'
           ./emo --bg '#000000' -c '#FFFFFF' -o preview-images/font-white-on-black.png 'White'
 
-          # ゲーミング色アニメパターン
+          # ゲーミング色
           ./emo --font-color gaming -o preview-images/gaming.gif 'Gaming'
-          ./emo --font-color gaming --rotate -o preview-images/gaming-rotate.gif 'GO'
-          ./emo --font-color gaming --revolve -o preview-images/gaming-revolve.gif 'GAME'
 
-          # 回転アニメパターン
+          # 回転アニメ
           ./emo --rotate -o preview-images/rotate-single.gif 'LGTM'
-          ./emo --rotate -o preview-images/rotate-multi.gif '猫に\小判'
-          ./emo --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
-
-          # 回転アニメ（リバース）パターン
           ./emo --rotate=reverse -o preview-images/rotate-reverse-single.gif 'LGTM'
-          ./emo --rotate=reverse -o preview-images/rotate-reverse-multi.gif '猫に\小判'
 
-          # 公転アニメパターン
+          # 公転アニメ
           ./emo --revolve -o preview-images/revolve-2x2.gif 'ab\cd'
-          ./emo --revolve -o preview-images/revolve-multi.gif '猫に\小判'
-          ./emo --revolve --bg '#E63946' -o preview-images/revolve-bg-red.gif 'ab\cd'
-
-          # 公転アニメ（リバース）パターン
           ./emo --revolve=reverse -o preview-images/revolve-reverse-2x2.gif 'ab\cd'
-          ./emo --revolve=reverse -o preview-images/revolve-reverse-multi.gif '猫に\小判'
 
-          # 速度調整パターン
-          ./emo --rotate --speed 0.5 -o preview-images/rotate-speed-slow.gif 'LGTM'
-          ./emo --rotate --speed 2.0 -o preview-images/rotate-speed-fast.gif 'LGTM'
-          ./emo --revolve --speed 0.5 -o preview-images/revolve-speed-slow.gif 'ab\cd'
-          ./emo --revolve --speed 2.0 -o preview-images/revolve-speed-fast.gif 'ab\cd'
-
-          # 横スクロールアニメパターン
+          # 横スクロール
           ./emo --scroll-x -o preview-images/scroll-x-single.gif 'LGTM'
-          ./emo --scroll-x -o preview-images/scroll-x-multi.gif '猫に\小判'
           ./emo --scroll-x=reverse -o preview-images/scroll-x-reverse.gif 'LGTM'
 
-          # 縦スクロールアニメパターン
+          # 縦スクロール
           ./emo --scroll-y -o preview-images/scroll-y-single.gif 'LGTM'
-          ./emo --scroll-y -o preview-images/scroll-y-multi.gif '猫に\小判'
           ./emo --scroll-y=reverse -o preview-images/scroll-y-reverse.gif 'LGTM'
 
-          # スクロール組み合わせパターン
+          # パルス
+          ./emo --pulsing -o preview-images/pulsing.gif 'LGTM'
+          ./emo --pulsing=reverse -o preview-images/pulsing-reverse.gif 'LGTM'
+
+          # 速度調整
+          ./emo --rotate --speed 0.5 -o preview-images/rotate-speed-slow.gif 'LGTM'
+          ./emo --rotate --speed 2.0 -o preview-images/rotate-speed-fast.gif 'LGTM'
+
+          # アニメーション組み合わせ
           ./emo --scroll-x --scroll-y -o preview-images/scroll-xy-single.gif 'LGTM'
           ./emo --scroll-x --rotate -o preview-images/scroll-x-rotate.gif 'LGTM'
-
-          # パルスアニメパターン
-          ./emo --pulsing -o preview-images/pulsing.gif 'LGTM'
-          ./emo --pulsing -o preview-images/pulsing-multi.gif '猫に\小判'
-          ./emo --pulsing=reverse -o preview-images/pulsing-reverse.gif 'LGTM'
           ./emo --pulsing --rotate -o preview-images/pulsing-rotate.gif 'GO'
+          ./emo --pulsing --scroll-x -o preview-images/pulsing-scroll-x.gif 'LGTM'
+
+          # カラー × アニメーション
+          ./emo --rotate --bg '#E63946' -o preview-images/rotate-bg-red.gif '完了'
+          ./emo --rotate -c '#FF0000' -o preview-images/rotate-font-red.gif 'LGTM'
+          ./emo --font-color gaming --rotate -o preview-images/gaming-rotate.gif 'GO'
+          ./emo --font-color gaming --revolve -o preview-images/gaming-revolve.gif 'GAME'
           ./emo --pulsing --font-color gaming -o preview-images/pulsing-gaming.gif 'RGB'
 
       - name: previews ブランチに画像をプッシュ
@@ -155,60 +141,71 @@ jobs:
               '',
               '> ビルドコマンドで生成した絵文字のプレビューです。',
               '',
-              '### 改行含むパターン',
+              '### 基本テキスト',
               '',
               '| コマンド | 出力 |',
               '|---------|------|',
+              `| \`emo 'お気持ち'\` | ![お気持ち](${base}/single-medium.png) |`,
               `| \`emo '猫に\\小判'\` | ![猫に\\小判](${base}/multiline-2.png) |`,
-              `| \`emo 'ありがとう\\ございます'\` | ![ありがとう\\ございます](${base}/multiline-long.png) |`,
               '',
-              '### 背景色が異なるパターン',
+              '### 背景色 (--bg)',
               '',
               '| 背景色 | コマンド | 出力 |',
               '|--------|---------|------|',
-              `| デフォルト (#1D3557) | \`emo 'お気持ち'\` | ![お気持ち](${base}/single-medium.png) |`,
               `| 赤 (#E63946) | \`emo --bg '#E63946' 'LGTM'\` | ![LGTM](${base}/bg-red.png) |`,
               `| 緑 (#2ECC71) | \`emo --bg '#2ECC71' '完了'\` | ![完了](${base}/bg-green.png) |`,
               `| オレンジ (#F39C12) | \`emo --bg '#F39C12' '注意'\` | ![注意](${base}/bg-orange.png) |`,
               `| 紫 (#6C3483) | \`emo --bg '#6C3483' 'WIP'\` | ![WIP](${base}/bg-purple.png) |`,
               '',
-              '### フォント色が異なるパターン',
+              '### フォント色 (-c / --font-color)',
               '',
               '| フォント色 | コマンド | 出力 |',
               '|-----------|---------|------|',
-              `| デフォルト (#FFFFFF) | \`emo 'お気持ち'\` | ![お気持ち](${base}/single-medium.png) |`,
               `| 赤 (#FF0000) | \`emo -c '#FF0000' 'Red'\` | ![Red](${base}/font-red.png) |`,
               `| 緑 (#00FF00) | \`emo -c '#00FF00' 'Green'\` | ![Green](${base}/font-green.png) |`,
               `| 青 (#0000FF) | \`emo -c '#0000FF' 'Blue'\` | ![Blue](${base}/font-blue.png) |`,
               `| 白 on 黒 | \`emo --bg '#000000' -c '#FFFFFF' 'White'\` | ![White](${base}/font-white-on-black.png) |`,
               '',
-              '### ゲーミング色アニメ (--font-color gaming)',
+              '### ゲーミング色 (--font-color gaming)',
               '',
               '| コマンド | 出力 |',
               '|---------|------|',
               `| \`emo --font-color gaming 'Gaming'\` | ![Gaming](${base}/gaming.gif) |`,
-              `| \`emo --font-color gaming --rotate 'GO'\` | ![GO](${base}/gaming-rotate.gif) |`,
-              `| \`emo --font-color gaming --revolve 'GAME'\` | ![GAME](${base}/gaming-revolve.gif) |`,
               '',
               '### 回転アニメ (--rotate)',
               '',
               '| コマンド | 出力 |',
               '|---------|------|',
               `| \`emo --rotate 'LGTM'\` | ![LGTM](${base}/rotate-single.gif) |`,
-              `| \`emo --rotate '猫に\\小判'\` | ![猫に\\小判](${base}/rotate-multi.gif) |`,
-              `| \`emo --rotate --bg '#E63946' '完了'\` | ![完了](${base}/rotate-bg-red.gif) |`,
               `| \`emo --rotate=reverse 'LGTM'\` | ![LGTM](${base}/rotate-reverse-single.gif) |`,
-              `| \`emo --rotate=reverse '猫に\\小判'\` | ![猫に\\小判](${base}/rotate-reverse-multi.gif) |`,
               '',
               '### 公転アニメ (--revolve)',
               '',
               '| コマンド | 出力 |',
               '|---------|------|',
               `| \`emo --revolve 'ab\\cd'\` | ![ab\\cd](${base}/revolve-2x2.gif) |`,
-              `| \`emo --revolve '猫に\\小判'\` | ![猫に\\小判](${base}/revolve-multi.gif) |`,
-              `| \`emo --revolve --bg '#E63946' 'ab\\cd'\` | ![ab\\cd](${base}/revolve-bg-red.gif) |`,
               `| \`emo --revolve=reverse 'ab\\cd'\` | ![ab\\cd](${base}/revolve-reverse-2x2.gif) |`,
-              `| \`emo --revolve=reverse '猫に\\小判'\` | ![猫に\\小判](${base}/revolve-reverse-multi.gif) |`,
+              '',
+              '### 横スクロール (--scroll-x)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --scroll-x 'LGTM'\` | ![LGTM](${base}/scroll-x-single.gif) |`,
+              `| \`emo --scroll-x=reverse 'LGTM'\` | ![LGTM](${base}/scroll-x-reverse.gif) |`,
+              '',
+              '### 縦スクロール (--scroll-y)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --scroll-y 'LGTM'\` | ![LGTM](${base}/scroll-y-single.gif) |`,
+              `| \`emo --scroll-y=reverse 'LGTM'\` | ![LGTM](${base}/scroll-y-reverse.gif) |`,
+              '',
+              '### パルス (--pulsing)',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo --pulsing 'LGTM'\` | ![LGTM](${base}/pulsing.gif) |`,
+              `| \`emo --pulsing=reverse 'LGTM'\` | ![LGTM](${base}/pulsing-reverse.gif) |`,
               '',
               '### 速度調整 (--speed)',
               '',
@@ -216,47 +213,25 @@ jobs:
               '|---------|------|',
               `| \`emo --rotate --speed 0.5 'LGTM'\` | ![LGTM](${base}/rotate-speed-slow.gif) |`,
               `| \`emo --rotate --speed 2.0 'LGTM'\` | ![LGTM](${base}/rotate-speed-fast.gif) |`,
-              `| \`emo --revolve --speed 0.5 'ab\\cd'\` | ![ab\\cd](${base}/revolve-speed-slow.gif) |`,
-              `| \`emo --revolve --speed 2.0 'ab\\cd'\` | ![ab\\cd](${base}/revolve-speed-fast.gif) |`,
               '',
-              '### 横スクロールアニメ (--scroll-x)',
-              '',
-              '| コマンド | 出力 |',
-              '|---------|------|',
-              `| \`emo --scroll-x 'LGTM'\` | ![LGTM](${base}/scroll-x-single.gif) |`,
-              `| \`emo --scroll-x '猫に\\小判'\` | ![猫に\\小判](${base}/scroll-x-multi.gif) |`,
-              `| \`emo --scroll-x=reverse 'LGTM'\` | ![LGTM](${base}/scroll-x-reverse.gif) |`,
-              '',
-              '### 縦スクロールアニメ (--scroll-y)',
-              '',
-              '| コマンド | 出力 |',
-              '|---------|------|',
-              `| \`emo --scroll-y 'LGTM'\` | ![LGTM](${base}/scroll-y-single.gif) |`,
-              `| \`emo --scroll-y '猫に\\小判'\` | ![猫に\\小判](${base}/scroll-y-multi.gif) |`,
-              `| \`emo --scroll-y=reverse 'LGTM'\` | ![LGTM](${base}/scroll-y-reverse.gif) |`,
-              '',
-              '### スクロール組み合わせ',
+              '### アニメーション組み合わせ',
               '',
               '| コマンド | 出力 |',
               '|---------|------|',
               `| \`emo --scroll-x --scroll-y 'LGTM'\` | ![LGTM](${base}/scroll-xy-single.gif) |`,
               `| \`emo --scroll-x --rotate 'LGTM'\` | ![LGTM](${base}/scroll-x-rotate.gif) |`,
-              '',
-              '### パルスアニメ (--pulsing)',
-              '',
-              '| コマンド | 出力 |',
-              '|---------|------|',
-              `| \`emo --pulsing 'LGTM'\` | ![LGTM](${base}/pulsing.gif) |`,
-              `| \`emo --pulsing '猫に\\小判'\` | ![猫に\\小判](${base}/pulsing-multi.gif) |`,
-              `| \`emo --pulsing=reverse 'LGTM'\` | ![LGTM](${base}/pulsing-reverse.gif) |`,
               `| \`emo --pulsing --rotate 'GO'\` | ![GO](${base}/pulsing-rotate.gif) |`,
-              `| \`emo --pulsing --font-color gaming 'RGB'\` | ![RGB](${base}/pulsing-gaming.gif) |`,
+              `| \`emo --pulsing --scroll-x 'LGTM'\` | ![LGTM](${base}/pulsing-scroll-x.gif) |`,
               '',
-              '### その他',
+              '### カラー × アニメーション',
               '',
               '| コマンド | 出力 |',
               '|---------|------|',
-              `| \`emo '猫'\` | ![猫](${base}/single-short.png) |`,
+              `| \`emo --rotate --bg '#E63946' '完了'\` | ![完了](${base}/rotate-bg-red.gif) |`,
+              `| \`emo --rotate -c '#FF0000' 'LGTM'\` | ![LGTM](${base}/rotate-font-red.gif) |`,
+              `| \`emo --font-color gaming --rotate 'GO'\` | ![GO](${base}/gaming-rotate.gif) |`,
+              `| \`emo --font-color gaming --revolve 'GAME'\` | ![GAME](${base}/gaming-revolve.gif) |`,
+              `| \`emo --pulsing --font-color gaming 'RGB'\` | ![RGB](${base}/pulsing-gaming.gif) |`,
             ].join('\n');
 
             // 既存のボットコメントを探して更新、なければ作成
