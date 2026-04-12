@@ -93,8 +93,8 @@ func composeGIF(
 
 		g.Image = append(g.Image, paletted)
 		g.Delay = append(g.Delay, delay)
+		g.Disposal = append(g.Disposal, gif.DisposalBackground)
 	}
 
 	return g, nil
 }
-
