@@ -47,6 +47,8 @@ func hsvToRGB(h, s, v float64) color.RGBA {
 
 // findFontAndMetrics finds the largest font size where all lines fit within the
 // draw area and returns the font face, ascent, and descent in points.
+// Uses actual glyph bounds instead of font-declared metrics to handle decorative
+// fonts (e.g., Dela Gothic) that declare larger metrics than their actual CJK glyphs.
 func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, float64, error) {
 	ctx := gg.NewContext(canvasSize, canvasSize)
 	fontSize := 120.0
@@ -59,10 +61,19 @@ func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, f
 		}
 		ctx.SetFontFace(face)
 
-		m := face.Metrics()
-		ascent := float64(m.Ascent) / 64
-		descent := float64(m.Descent) / 64
-		totalHeight := (ascent + descent) * float64(len(lines))
+		// Use actual glyph bounds instead of font-declared metrics
+		var maxAscent, maxDescent float64
+		for _, line := range lines {
+			a, d := glyphBounds(face, line)
+			if a > maxAscent {
+				maxAscent = a
+			}
+			if d > maxDescent {
+				maxDescent = d
+			}
+		}
+		lineH := maxAscent + maxDescent
+		totalHeight := lineH * float64(len(lines))
 
 		fits := totalHeight <= drawArea
 		if fits {
@@ -79,8 +90,18 @@ func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, f
 		}
 		fontSize--
 	}
-	m := face.Metrics()
-	return face, float64(m.Ascent) / 64, float64(m.Descent) / 64, nil
+	// Return max glyph bounds (actual ink extents, consistent with fitting check)
+	var maxAscent, maxDescent float64
+	for _, line := range lines {
+		a, d := glyphBounds(face, line)
+		if a > maxAscent {
+			maxAscent = a
+		}
+		if d > maxDescent {
+			maxDescent = d
+		}
+	}
+	return face, maxAscent, maxDescent, nil
 }
 
 // glyphBounds returns the actual glyph ascent and descent for a string using

@@ -61,6 +61,8 @@ func newRevolveRenderer(
 	charMaxLimit := float64(drawArea) * sinPN / (1 + sinPN)
 
 	// Find the largest font where every character fits within charMaxLimit
+	// Uses actual glyph bounds instead of font-declared metrics to handle
+	// decorative fonts with inflated metrics.
 	var face font.Face
 	var ascent, descent float64
 	tmpCtx := gg.NewContext(canvasSize, canvasSize)
@@ -70,36 +72,50 @@ func newRevolveRenderer(
 			return nil, err
 		}
 		tmpCtx.SetFontFace(faceAtSize)
-		m := faceAtSize.Metrics()
-		a := float64(m.Ascent) / 64
-		d := float64(m.Descent) / 64
 
-		var maxW float64
+		var maxW, maxH float64
+		var iterAscent, iterDescent float64
 		for _, s := range chars {
 			w, _ := tmpCtx.MeasureString(s)
 			if w > maxW {
 				maxW = w
 			}
+			a, d := glyphBounds(faceAtSize, s)
+			h := a + d
+			if h > maxH {
+				maxH = h
+			}
+			if a > iterAscent {
+				iterAscent = a
+			}
+			if d > iterDescent {
+				iterDescent = d
+			}
 		}
 
 		face = faceAtSize
-		ascent = a
-		descent = d
-		if math.Max(maxW, a+d) <= charMaxLimit {
+		ascent = iterAscent
+		descent = iterDescent
+		if math.Max(maxW, maxH) <= charMaxLimit {
 			break
 		}
 	}
 
-	// Re-measure maxCharW at the final font size to compute orbit radius
+	// Re-measure at final font size using actual glyph bounds
 	tmpCtx.SetFontFace(face)
-	var maxCharW float64
+	var maxCharW, maxCharH float64
 	for _, s := range chars {
 		w, _ := tmpCtx.MeasureString(s)
 		if w > maxCharW {
 			maxCharW = w
 		}
+		a, d := glyphBounds(face, s)
+		h := a + d
+		if h > maxCharH {
+			maxCharH = h
+		}
 	}
-	charMax := math.Max(maxCharW, ascent+descent)
+	charMax := math.Max(maxCharW, maxCharH)
 	r := float64(drawArea)/2 - charMax/2
 
 	cx, cy := float64(canvasSize)/2, float64(canvasSize)/2
