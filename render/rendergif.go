@@ -17,41 +17,49 @@ const (
 
 // compositeWithWrap draws src onto dst with seamless wrap-around scrolling.
 // dx and dy are pre-computed pixel offsets (from FrameParams.ScrollX / ScrollY).
+// tileW and tileH define the tile size for wrapping (0 disables tiling for that axis).
 // Any content that exits one edge re-enters immediately from the opposite edge.
-func compositeWithWrap(dst *gg.Context, src image.Image, dx, dy float64) {
+func compositeWithWrap(dst *gg.Context, src image.Image, dx, dy float64, tileW, tileH float64) {
 	ix := int(math.Round(dx))
 	iy := int(math.Round(dy))
 
-	// Determine the wrap-copy offsets: the copy appears on the side opposite
-	// to where the main image moved.
-	hasX := ix != 0
-	hasY := iy != 0
-	wxOff := 0
-	wyOff := 0
-	if hasX {
-		if ix < 0 {
-			wxOff = canvasSize // content moved left → wrap copy enters from right
-		} else {
-			wxOff = -canvasSize // content moved right → wrap copy enters from left
+	// Calculate X-axis tile positions
+	var xOffsets []int
+	if tileW > 0 {
+		// Compute range of tile indices needed to cover the canvas [0, canvasSize)
+		// A tile at position p covers [p, p+canvasSize)
+		// We need tiles where p < canvasSize and p+canvasSize > 0
+		// Which gives: -canvasSize < p < canvasSize
+		// Position p = ix + k*tileW, so:
+		// -canvasSize < ix + k*tileW < canvasSize
+		// (-canvasSize - ix) / tileW < k < (canvasSize - ix) / tileW
+		kMin := int(math.Ceil(float64(-canvasSize-ix) / tileW))
+		kMax := int(math.Floor(float64(canvasSize-ix) / tileW))
+		for k := kMin; k <= kMax; k++ {
+			xOffsets = append(xOffsets, ix+int(math.Round(float64(k)*tileW)))
 		}
-	}
-	if hasY {
-		if iy < 0 {
-			wyOff = canvasSize
-		} else {
-			wyOff = -canvasSize
-		}
+	} else {
+		xOffsets = []int{ix}
 	}
 
-	dst.DrawImage(src, ix, iy)
-	if hasX {
-		dst.DrawImage(src, ix+wxOff, iy)
+	// Calculate Y-axis tile positions
+	var yOffsets []int
+	if tileH > 0 {
+		// Same logic as X-axis
+		lMin := int(math.Ceil(float64(-canvasSize-iy) / tileH))
+		lMax := int(math.Floor(float64(canvasSize-iy) / tileH))
+		for l := lMin; l <= lMax; l++ {
+			yOffsets = append(yOffsets, iy+int(math.Round(float64(l)*tileH)))
+		}
+	} else {
+		yOffsets = []int{iy}
 	}
-	if hasY {
-		dst.DrawImage(src, ix, iy+wyOff)
-	}
-	if hasX && hasY {
-		dst.DrawImage(src, ix+wxOff, iy+wyOff)
+
+	// Draw all tile combinations
+	for _, x := range xOffsets {
+		for _, y := range yOffsets {
+			dst.DrawImage(src, x, y)
+		}
 	}
 }
 

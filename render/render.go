@@ -120,6 +120,8 @@ type FrameParams struct {
 	ScrollX       float64 // horizontal pixel offset for wrap-around; 0 = no scroll
 	ScrollY       float64 // vertical pixel offset for wrap-around; 0 = no scroll
 	SizeScale     float64 // scale delta from 1.0: 0=1x (identity), +1.0=2x, -0.5=0.5x
+	ScrollTileW   float64 // base tile width for x-scroll; 0 = no x-scroll
+	ScrollTileH   float64 // base tile height for y-scroll; 0 = no y-scroll
 }
 
 // frameEffect computes per-frame animation parameters.
@@ -136,32 +138,36 @@ func composeEffects(effects ...frameEffect) frameEffect {
 			p.ScrollX += ep.ScrollX
 			p.ScrollY += ep.ScrollY
 			p.SizeScale += ep.SizeScale
+			p.ScrollTileW += ep.ScrollTileW
+			p.ScrollTileH += ep.ScrollTileH
 		}
 		return p
 	}
 }
 
 // scrollXEffect returns an effect function for horizontal scrolling.
-func scrollXEffect(reverse bool) frameEffect {
+// tileWidth specifies the tile size for seamless wrapping (constant each frame).
+func scrollXEffect(reverse bool, tileWidth float64) frameEffect {
 	return func(frame, total int) FrameParams {
 		progress := float64(frame) / float64(total)
-		dx := -progress * canvasSize // default: right-to-left (negative)
+		dx := -progress * tileWidth // default: right-to-left (negative)
 		if reverse {
 			dx = -dx // reverse: left-to-right (positive)
 		}
-		return FrameParams{ScrollX: dx}
+		return FrameParams{ScrollX: dx, ScrollTileW: tileWidth}
 	}
 }
 
 // scrollYEffect returns an effect function for vertical scrolling.
-func scrollYEffect(reverse bool) frameEffect {
+// tileHeight specifies the tile size for seamless wrapping (constant each frame).
+func scrollYEffect(reverse bool, tileHeight float64) frameEffect {
 	return func(frame, total int) FrameParams {
 		progress := float64(frame) / float64(total)
-		dy := -progress * canvasSize // default: bottom-to-top (negative)
+		dy := -progress * tileHeight // default: bottom-to-top (negative)
 		if reverse {
 			dy = -dy // reverse: top-to-bottom (positive)
 		}
-		return FrameParams{ScrollY: dy}
+		return FrameParams{ScrollY: dy, ScrollTileH: tileHeight}
 	}
 }
 
@@ -215,6 +221,8 @@ type rendererSpec struct {
 	colorEffect func(frame, total int) color.Color
 	effects     []frameEffect
 	isRevolve   bool
+	scrollX     *bool // nil=disabled, &false=forward, &true=reverse
+	scrollY     *bool // nil=disabled, &false=forward, &true=reverse
 }
 
 // rendererOption configures a rendererSpec.
@@ -236,14 +244,14 @@ func withScrollX(reverse *bool) rendererOption {
 	if reverse == nil {
 		return nil
 	}
-	return func(s *rendererSpec) { s.effects = append(s.effects, scrollXEffect(*reverse)) }
+	return func(s *rendererSpec) { s.scrollX = reverse }
 }
 
 func withScrollY(reverse *bool) rendererOption {
 	if reverse == nil {
 		return nil
 	}
-	return func(s *rendererSpec) { s.effects = append(s.effects, scrollYEffect(*reverse)) }
+	return func(s *rendererSpec) { s.scrollY = reverse }
 }
 
 func withRotate(reverse *bool) rendererOption {
@@ -290,15 +298,56 @@ func buildRenderer(f *opentype.Font, opts ...rendererOption) (func(frame, total 
 			o(spec)
 		}
 	}
-	effect := composeEffects(spec.effects...)
+
 	if spec.isRevolve {
+		// For revolve, scroll uses offscreen+compositeWithWrap with canvasSize tile.
+		if spec.scrollX != nil {
+			spec.effects = append(spec.effects, scrollXEffect(*spec.scrollX, canvasSize))
+		}
+		if spec.scrollY != nil {
+			spec.effects = append(spec.effects, scrollYEffect(*spec.scrollY, canvasSize))
+		}
+		effect := composeEffects(spec.effects...)
 		return newRevolveRenderer(spec.lines, spec.bgColor, spec.fontColor, spec.colorEffect, effect, f)
 	}
+
+	// For text renderer, compute tile sizes from font metrics and create scroll effects.
+	if spec.scrollX != nil || spec.scrollY != nil {
+		face, ascent, descent, err := findFontAndMetrics(spec.lines, f)
+		if err != nil {
+			return nil, err
+		}
+		n := len(spec.lines)
+		lineH := ascent + descent
+
+		if spec.scrollX != nil {
+			var tileW float64
+			mctx := gg.NewContext(canvasSize, canvasSize)
+			mctx.SetFontFace(face)
+			for _, line := range spec.lines {
+				w, _ := mctx.MeasureString(line)
+				if w > tileW {
+					tileW = w
+				}
+			}
+			spec.effects = append(spec.effects, scrollXEffect(*spec.scrollX, tileW))
+		}
+
+		if spec.scrollY != nil {
+			firstAscent, _ := glyphBounds(face, spec.lines[0])
+			_, lastDescent := glyphBounds(face, spec.lines[n-1])
+			tileH := float64(n-1)*lineH + firstAscent + lastDescent
+			spec.effects = append(spec.effects, scrollYEffect(*spec.scrollY, tileH))
+		}
+	}
+
+	effect := composeEffects(spec.effects...)
 	return newTextRenderer(spec.lines, spec.bgColor, spec.fontColor, spec.colorEffect, effect, f)
 }
 
 // newTextRenderer returns a closure that renders text with effects (rotation, scrolling, etc.).
 // The closure captures precomputed font metrics and computes per-frame transforms using the effect.
+// Scroll configuration is entirely determined by FrameParams (ScrollX, ScrollY, ScrollTileW, ScrollTileH).
 func newTextRenderer(
 	lines []string,
 	bgColor color.Color,
@@ -317,6 +366,9 @@ func newTextRenderer(
 	firstAscent, _ := glyphBounds(face, lines[0])
 	_, lastDescent := glyphBounds(face, lines[n-1])
 	baseline0 := (canvasSize - float64(n-1)*lineH + firstAscent - lastDescent) / 2
+
+	// Scroll configuration is in the effect (FrameParams.ScrollTileW/H).
+	// No separate tile size computation here.
 
 	return func(frame, total int) (image.Image, error) {
 		params := effect(frame, total)
@@ -339,53 +391,77 @@ func newTextRenderer(
 			fc = colorEffect(frame, total)
 		}
 
-		if params.ScrollX != 0 || params.ScrollY != 0 {
-			// Two-pass: render content to offscreen, then composite with wrap.
-			// This allows seamless wrapping where content that exits one edge
-			// re-enters from the opposite edge.
-			offscreen := gg.NewContext(canvasSize, canvasSize)
-			offscreen.SetFontFace(face)
-			offscreen.SetColor(fc)
-			offscreen.Push()
-			if params.RotationAngle != 0 || params.SizeScale != 0 {
-				offscreen.Translate(canvasSize/2, canvasSize/2)
-				if params.SizeScale != 0 {
-					s := 1.0 + params.SizeScale
-					offscreen.Scale(s, s)
-				}
-				if params.RotationAngle != 0 {
-					offscreen.Rotate(params.RotationAngle)
-				}
-				offscreen.Translate(-canvasSize/2, -canvasSize/2)
+		ctx.SetFontFace(face)
+		ctx.SetColor(fc)
+		ctx.Push()
+
+		s := 1.0 + params.SizeScale
+		if s < 0.001 {
+			s = 0.001
+		}
+
+		if params.SizeScale != 0 || params.RotationAngle != 0 {
+			ctx.Translate(canvasSize/2, canvasSize/2)
+			if params.SizeScale != 0 {
+				ctx.Scale(s, s)
 			}
-			for i, line := range lines {
-				baseline := baseline0 + float64(i)*lineH
-				offscreen.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+			if params.RotationAngle != 0 {
+				ctx.Rotate(params.RotationAngle)
 			}
-			offscreen.Pop()
-			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY)
+			ctx.Translate(-canvasSize/2, -canvasSize/2)
+		}
+
+		// Detect scroll from FrameParams
+		hasScrollX := params.ScrollTileW > 0
+		hasScrollY := params.ScrollTileH > 0
+
+		if hasScrollX || hasScrollY {
+			// Draw multiple tiled copies directly on the scaled canvas.
+			//
+			// The scale transform is already applied to ctx (about canvas center).
+			// Scroll offsets are in canvas space; divide by s to get pre-transform coords.
+			// Tile intervals in pre-transform space equal ScrollTileW/H (no s factor),
+			// because the scale is baked into the canvas transform — the copies therefore
+			// appear at intervals of s*ScrollTileW/H in the final image.
+			scrollXPre := 0.0
+			if hasScrollX {
+				scrollXPre = params.ScrollX / s
+			}
+			scrollYPre := 0.0
+			if hasScrollY {
+				scrollYPre = params.ScrollY / s
+			}
+
+			// Number of copies needed to fill the canvas in each axis.
+			// s*ScrollTileW is the visual tile size; ceil(canvas/tile)+2 guarantees coverage.
+			kMin, kMax := 0, 0
+			if hasScrollX {
+				nk := int(math.Ceil(canvasSize/(s*params.ScrollTileW))) + 2
+				kMin, kMax = -nk, nk
+			}
+			lMin, lMax := 0, 0
+			if hasScrollY {
+				nl := int(math.Ceil(canvasSize/(s*params.ScrollTileH))) + 2
+				lMin, lMax = -nl, nl
+			}
+
+			for k := kMin; k <= kMax; k++ {
+				for l := lMin; l <= lMax; l++ {
+					for i, line := range lines {
+						x := canvasSize/2.0 + scrollXPre + float64(k)*params.ScrollTileW
+						y := baseline0 + scrollYPre + float64(l)*params.ScrollTileH + float64(i)*lineH
+						ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+					}
+				}
+			}
 		} else {
-			ctx.SetFontFace(face)
-			ctx.SetColor(fc)
-			ctx.Push()
-			if params.RotationAngle != 0 || params.SizeScale != 0 {
-				ctx.Translate(canvasSize/2, canvasSize/2)
-				if params.SizeScale != 0 {
-					s := 1.0 + params.SizeScale
-					ctx.Scale(s, s)
-				}
-				if params.RotationAngle != 0 {
-					ctx.Rotate(params.RotationAngle)
-				}
-				ctx.Translate(-canvasSize/2, -canvasSize/2)
-			}
 			for i, line := range lines {
 				baseline := baseline0 + float64(i)*lineH
 				ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
 			}
-			ctx.Pop()
 		}
 
+		ctx.Pop()
 		return ctx.Image(), nil
 	}, nil
 }

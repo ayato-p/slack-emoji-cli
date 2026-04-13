@@ -180,7 +180,7 @@ func newRevolveRenderer(
 				offscreen.DrawStringAnchored(s, x, baseline, 0.5, 0)
 			}
 			offscreen.Pop()
-			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY)
+			compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY, canvasSize, canvasSize)
 		} else {
 			ctx.Push()
 			if params.SizeScale != 0 {
