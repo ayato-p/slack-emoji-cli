@@ -174,6 +174,18 @@ When adding any new CLI option (animation, color, or parameter), you **must** up
 - Supports: `#RGB`, `#RRGGBB`, `#RRGGBBAA`, or literal `"transparent"`
 - Returns `color.RGBA`
 
+## Integration Testing
+
+コードを修正する際は、以下のワークフローを必ず守ること：
+
+1. **Before キャプチャ（自動）**: 最初の Edit/Write 前に PreToolUse フックが自動で `/tmp/emo/before/` にスナップショットを生成する（初回のみ・約20〜30秒かかる）
+2. **実装完了後の検証（必須）**: 実装が完了したら必ず `/emo-integration-test after <変更したケース名...>` を実行すること
+   - ケース名の一覧は `bash scripts/integration_test.sh list` で確認できる
+   - 変更したオプションに関連するケースをすべて指定する（スキルファイル `.claude/commands/emo-integration-test.md` に対応表あり）
+   - 例: `--rotate` 関連を変更した場合 → `/emo-integration-test after rotate rotate-reverse scroll-x-rotate pulsing-rotate fontcolor-gaming-rotate scroll-x-scroll-y-rotate`
+3. **FAIL 時の対応**: 予期しない変更（FAIL）があれば原因を調査・修正してから再度検証する
+4. **リセット**: スキルが自動で `/tmp/emo/before` と `/tmp/emo/after` を削除し次のセッションに備える
+
 ## References
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed rendering orchestration, dependency graph, and validation invariants.

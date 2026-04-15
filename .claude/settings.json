@@ -2,10 +2,26 @@
   "permissions": {
     "allow": [
       "Bash(./emo:*)",
-      "Bash(go:*)"
+      "Bash(go:*)",
+      "Bash(bash scripts/integration_test.sh:*)",
+      "Bash(bash .claude/hooks/integration-test-before.sh:*)",
+      "Bash(sha256sum:*)",
+      "Bash(rm -rf /tmp/emo/before /tmp/emo/after:*)"
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/integration-test-before.sh",
+            "statusMessage": "📸 Before スナップショット確認中..."
+          }
+        ]
+      }
+    ],
     "FileChanged": [
       {
         "matcher": "config/emoconfig.go",
