@@ -2,28 +2,43 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Before Any Implementation
+
+**実装に入る前に必ず `advisor()` を呼び出してアドバイスを求めること。**
+
+This applies to any code writing, editing, or architectural decision. Orientation tasks (reading files, searching, building context) may proceed first, but call `advisor()` before the first substantive change.
+
+---
+
 ## Quick Start
 
-**Build**: `go build -o emo .`  
-**Run**: `./emo [options] TEXT` (e.g., `./emo 'hello'`)  
-**Install**: `go install .` (installs to $GOBIN)
+| Command | Description |
+|---|---|
+| `go build -o emo .` | Build |
+| `./emo [options] TEXT` | Run (e.g., `./emo 'hello'`) |
+| `go install .` | Install to `$GOBIN` |
 
 ## Permissions
 
-The following commands can be executed automatically without confirmation:
-- `./emo [options]` — Running the emoji CLI tool (with any flags and arguments)
-- `go build`, `go test`, `go install` — Build and test commands
+The following commands run automatically without confirmation:
+- `./emo [options]` — run the emoji CLI tool (any flags/arguments)
+- `go build`, `go test`, `go install` — build and test
+
+---
 
 ## Project Overview
 
-`slack-emoji-cli` is a CLI tool that generates Slack emoji images (128×128px PNG/GIF) from text. It supports multiple animation styles (rotate, revolve, scroll-x/y) and customizable backgrounds.
+`slack-emoji-cli` generates Slack emoji images (128×128px PNG/GIF) from text. Supports multiple animation styles (rotate, revolve, scroll-x/y) and customizable backgrounds.
 
 ### Tech Stack
+
 - **Language**: Go 1.25.1
-- **CLI Framework**: cobra (command structure) + viper (configuration parsing)
-- **Graphics**: `gg` library for 2D graphics, `image/gif` and `image/png` for encoding
-- **Font**: System default or user-specified via `--font` flag; uses `github.com/flopp/go-findfont` for font discovery
-- **Release**: goreleaser (multi-platform builds triggered on git tags)
+- **CLI**: cobra (command structure) + viper (configuration parsing)
+- **Graphics**: `gg` for 2D graphics, `image/gif` and `image/png` for encoding
+- **Font**: System default or `--font` flag; discovery via `github.com/flopp/go-findfont`
+- **Release**: goreleaser (multi-platform builds on git tags)
+
+---
 
 ## Architecture
 
@@ -36,39 +51,31 @@ viper.BindPFlags() + viper.Unmarshal()
   ↓
 EmoConfig (config/emoconfig.go)
   ↓
-render.Run(cfg) orchestrates rendering
+render.Run(cfg)
   ↓
 PNG (static) or GIF (animated)
 ```
 
 ### Package Organization
 
-- **`config/emoconfig.go`**: Central configuration struct + validation
-  - `EmoConfig`: Holds all settings (Text, animation flags, speed, colors, output path)
-  - `SetDefaults()`: Fills missing fields with defaults (e.g., output filename based on animation type)
-  - `Validate()`: Checks constraints (mutually exclusive animations, speed range [0.5–2.0], etc.)
-
-- **`render/`**: Rendering pipeline
-  - `run.go`: **Orchestrator** — calls specific render functions based on config
-  - `render.go`: Static PNG rendering for single image
-  - `rendergif.go`: Animated GIF with transformers (rotate, scroll)
-  - `revolve.go`: Specialized revolve animation (characters orbit canvas center)
-  - `transformer.go`: Animation transformers (Rotate type + interface)
-  - `font.go`: Font loading from file paths and text measurement utilities
-
-- **`main.go`**: CLI entry point
-  - cobra.Command definition with flag registration
-  - `init()`: Sets up flags with mapstructure tags for viper unmarshaling
-  - **Key detail**: Animation flags use `NoOptDefVal = "true"` to allow `--rotate` (becomes `"true"`) and `--rotate=reverse` (becomes `"reverse"`)
-  - **Font resolution** (`resolveFont()`): Empty `--font` → pick first system font; explicit path/name → look up via `findfont.Find()`
+| Path | Role |
+|---|---|
+| `config/emoconfig.go` | Central config struct, `SetDefaults()`, `Validate()` |
+| `render/run.go` | Orchestrator — dispatches to specific renderers |
+| `render/render.go` | Static PNG rendering |
+| `render/rendergif.go` | Animated GIF with transformers |
+| `render/revolve.go` | Revolve animation (characters orbit canvas center) |
+| `render/transformer.go` | Animation transformer interface + Rotate type |
+| `render/font.go` | Font loading and text measurement |
+| `main.go` | cobra.Command definition, flag registration, font resolution |
 
 ### Key Design Patterns
 
 **EmoConfig as Central Representation**  
-All input (CLI flags, future JSON config) unmarshals into `EmoConfig`. This decouples input parsing from rendering logic and enables future config file support.
+All input (CLI flags, future config files) unmarshals into `EmoConfig`. Decouples parsing from rendering.
 
 **mapstructure Tags for Hyphenated Flags**  
-CLI flags use hyphens (`--scroll-x`), but Go struct fields are PascalCase. mapstructure tags explicitly map `"scroll-x"` → `ScrollX`:
+CLI flags use hyphens (`--scroll-x`); Go fields are PascalCase. Tags bridge the gap:
 ```go
 type EmoConfig struct {
     ScrollX string `mapstructure:"scroll-x"`
@@ -76,118 +83,92 @@ type EmoConfig struct {
 ```
 
 **Animation Strings**  
-Animation flags store three states as strings: `""` (off), `"true"` (normal), `"reverse"` (reversed). `animToFlags()` in `run.go` converts these to `*bool`: `nil` (off), `&false` (normal), `&true` (reversed).
+Animation flags hold three states: `""` (off), `"true"` (normal), `"reverse"` (reversed).  
+`animToFlags()` in `run.go` converts to `*bool`: `nil` / `&false` / `&true`.
+
+**NoOptDefVal for Boolean-Like Flags**  
+`--rotate` → `"true"`, `--rotate=reverse` → `"reverse"`. Requires `NoOptDefVal = "true"` in `init()`.
+
+---
 
 ## Adding New Features
 
-### Example: Adding a New Animation Option
+### New Animation Option
 
-1. **config/emoconfig.go**: Add field with mapstructure tag
+1. **`config/emoconfig.go`** — add field:
    ```go
-   type EmoConfig struct {
-       MyAnim string `json:"my-anim,omitempty" mapstructure:"my-anim"`
-   }
+   MyAnim string `json:"my-anim,omitempty" mapstructure:"my-anim"`
    ```
-
-2. **config/emoconfig.go**: Update `Validate()` if mutual exclusions apply
+2. **`config/emoconfig.go`** — add mutual exclusion in `Validate()` if needed
+3. **`main.go`** — register flag with `NoOptDefVal`:
    ```go
-   if c.MyAnim != "" && c.SomeOtherAnim != "" {
-       return fmt.Errorf("--my-anim and --some-other-anim cannot be used together")
-   }
-   ```
-
-3. **main.go**: Register the flag in `init()`
-   ```go
-   f.String("my-anim", "", "description of animation")
+   f.String("my-anim", "", "description")
    f.Lookup("my-anim").NoOptDefVal = "true"
    ```
-
-4. **render/run.go**: Handle in `Run()` dispatcher
+4. **`render/run.go`** — dispatch in `Run()`:
    ```go
    myAnim := animToFlags(cfg.MyAnim)
-   opts = append(opts, withMyAnim(myAnim))  // withMyAnim returns nil if myAnim is nil
+   opts = append(opts, withMyAnim(myAnim))
    ```
 
-### Example: Adding a New Configuration Option (Non-Animation)
+### New Configuration Option (Non-Animation)
 
-For a simple option like `--blur`:
-
-1. **config/emoconfig.go**: Add field with mapstructure tag
+1. **`config/emoconfig.go`** — add field:
    ```go
    Blur float64 `json:"blur,omitempty" mapstructure:"blur"`
    ```
-
-2. **config/emoconfig.go**: Update `SetDefaults()` if needed, add `Validate()` constraints
-   ```go
-   if c.Blur < 0 || c.Blur > 10 {
-       return fmt.Errorf("--blur must be 0–10, got %v", c.Blur)
-   }
-   ```
-
-3. **main.go**: Register without NoOptDefVal (it's not a boolean-like flag)
+2. **`config/emoconfig.go`** — add validation in `Validate()` / defaults in `SetDefaults()`
+3. **`main.go`** — register flag (no `NoOptDefVal`):
    ```go
    f.Float64("blur", 0, "blur radius (0–10)")
    ```
+4. **`render/`** — use the new field in rendering functions
 
-4. **render/**: Modify rendering functions to use the new config field
+### Update GitHub Actions Samples
 
-### After Adding Any New Option: Update GitHub Actions Samples
+When adding any new CLI option, update both workflow files to include sample images:
 
-When adding any new CLI option (animation, color, or parameter), you **must** update the GitHub Actions workflows to generate sample images. This ensures both `gh-pages` and PR preview include the new feature.
+**`.github/workflows/gh-pages.yml`**
+- Add generation command in the appropriate section
+- Add corresponding row(s) to the `index.html` table
 
-**Always add samples to both files:**
+**`.github/workflows/pr-preview.yml`**
+- Add the same generation commands
+- Add matching markdown rows to the GitHub script section
 
-1. **`.github/workflows/gh-pages.yml`** — Sample generation + index.html update
-   - Add generation command in the appropriate section (e.g., after background color samples)
-   - Add corresponding row(s) to the `index.html` table section
-   - Example: For `--font-color`, add:
-     ```bash
-     ./emo -c '#FF0000' -o sample-images/font-red.png 'Red'
-     ```
-   - And add an HTML table row with the command and image reference
+Guidelines: group related samples, include 3–4 representative examples, use `{feature}-{variant}.{png|gif}` filenames.
 
-2. **`.github/workflows/pr-preview.yml`** — Same samples + PR comment update
-   - Add the same generation commands to the "プレビュー画像生成" step
-   - Add corresponding markdown table rows to the GitHub script section
-   - Example table row:
-     ```javascript
-     `| 赤 (#FF0000) | \`emo -c '#FF0000' 'Red'\` | ![Red](${base}/font-red.png) |`,
-     ```
+---
 
-**Pattern to follow:**
-- Group related samples (e.g., all color variations together)
-- Include at least 3–4 representative examples
-- Use consistent image filenames: `{feature}-{variant}.{png|gif}`
+## Configuration Reference
 
-## Configuration
-
-**Output Filename Defaults** (set in `config.SetDefaults()`):
-- If any animation flag is set → `emoji.gif`
+**Output filename defaults** (`config.SetDefaults()`):
+- Any animation flag set → `emoji.gif`
 - Otherwise → `emoji.png`
 
-**Speed** (animation frame count control):
-- Range: 0.5–2.0
-- Validation in `config.Validate()`
-- Used by `RenderGIF()` to scale frame count
+**Speed** (`--speed`, range 0.5–2.0):  
+Controls GIF frame count; validated in `config.Validate()`.
 
-**Color Parsing** (render/run.go):
-- Supports: `#RGB`, `#RRGGBB`, `#RRGGBBAA`, or literal `"transparent"`
-- Returns `color.RGBA`
+**Color parsing** (`render/run.go`):  
+Accepts `#RGB`, `#RRGGBB`, `#RRGGBBAA`, or `"transparent"`. Returns `color.RGBA`.
+
+---
 
 ## Integration Testing
 
-コードを修正する際は、以下のワークフローを必ず守ること：
+コードを修正する際は以下のワークフローを必ず守ること：
 
 1. **Before キャプチャ（自動）**: 最初の Edit/Write 前に PreToolUse フックが自動で `/tmp/emo/before/` にスナップショットを生成する（初回のみ・約20〜30秒かかる）
-2. **実装完了後の検証（必須）**: 実装が完了したら必ず `/emo-integration-test after <変更したケース名...>` を実行すること
-   - ケース名の一覧は `bash scripts/integration_test.sh list` で確認できる
-   - 変更したオプションに関連するケースをすべて指定する（スキルファイル `.claude/commands/emo-integration-test.md` に対応表あり）
-   - 例: `--rotate` 関連を変更した場合 → `/emo-integration-test after rotate rotate-reverse scroll-x-rotate pulsing-rotate fontcolor-gaming-rotate scroll-x-scroll-y-rotate`
-3. **FAIL 時の対応**: 予期しない変更（FAIL）があれば原因を調査・修正してから再度検証する
+2. **実装完了後の検証（必須）**: `/emo-integration-test after <変更したケース名...>` を実行する
+   - ケース名は `bash scripts/integration_test.sh list` で確認
+   - 変更したオプションに関連するケースをすべて指定する（対応表は `.claude/commands/emo-integration-test.md`）
+   - 例: `--rotate` 関連 → `/emo-integration-test after rotate rotate-reverse scroll-x-rotate pulsing-rotate fontcolor-gaming-rotate scroll-x-scroll-y-rotate`
+3. **FAIL 時**: 予期しない変更があれば原因を調査・修正してから再検証する
 4. **リセット**: スキルが自動で `/tmp/emo/before` と `/tmp/emo/after` を削除し次のセッションに備える
+
+---
 
 ## References
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed rendering orchestration, dependency graph, and validation invariants.
-
-See [cobra/viper design memory](file:///home/ayato-p/.claude/projects/-home-ayato-p-sources-github-com-ayato-p-slack-emoji-cli/memory/design_cobra_viper.md) for discussion of EmoConfig strategy.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — rendering orchestration, dependency graph, validation invariants
+- [cobra/viper design memory](memory/design_cobra_viper.md) — EmoConfig strategy discussion
