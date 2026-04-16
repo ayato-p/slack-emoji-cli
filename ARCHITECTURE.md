@@ -8,9 +8,8 @@ main.go
 │   └── emoconfig.go       # EmoConfig struct, validation, defaults
 ├── render/
 │   ├── run.go             # Run(EmoConfig) - orchestrates rendering
-│   ├── render.go          # Text rendering + frame effect composition
-│   ├── rendergif.go       # GIF assembly from frame effects
-│   ├── revolve.go         # Revolve animation with frame effects
+│   ├── render.go          # Effect system, layout builders, unified renderFrame
+│   ├── rendergif.go       # GIF assembly + compositeWithWrap
 │   └── font.go            # Font utilities
 ```
 
@@ -21,17 +20,16 @@ main.go (CLI entry)
   ├─→ config/ (EmoConfig, validation)
   └─→ render/ (Run)
         ├─→ config/ (EmoConfig)
-        ├─→ buildRenderer() → frameEffect
-        ├─→ newTextRenderer(frameEffect) → renderFn
-        ├─→ newRevolveRenderer(frameEffect) → renderFn
-        └─→ composeGIF(renderFn) → GIF
+        ├─→ buildEffect() → func(frame, total int) EffectModel
+        └─→ renderFrame(EffectModel) → image.Image
+              └─→ EffectModel.DrawContent(ctx, params)
 ```
 
 **Key principle:** 
 - render package depends on config, not the reverse
 - Each frame effect computes its own animation parameters
 - Effects compose via `composeEffects()` to build a unified `frameEffect`
-- Renderers (`newTextRenderer`, `newRevolveRenderer`) consume effects, not manage animation state
+- Rendering strategy (text vs revolve) is captured as `DrawContent` in `EffectModel`; `renderFrame` is a single unified function
 
 ## Configuration Flow
 
@@ -108,15 +106,19 @@ type frameEffect func(frame, total int) FrameParams
 composeEffects(effects...) → frameEffect that merges all parameters
 ```
 
-### Renderer Builders (render/render.go, render/revolve.go)
+### Effect Builders (render/render.go)
 
-**newTextRenderer(lines, bgColor, effect, font)** → renderFn
-- Captures font and metrics (using provided opentype.Font)
-- Per-frame: calls effect(frame, total), applies RotationAngle, renders with ScrollX/Y via `compositeWithWrap`
+**buildTextEffect(font, spec)** → `func(frame, total int) EffectModel`
+- Computes text layout (font metrics, baseline, scroll tile sizes)
+- Per-frame closure: resolves color, returns `EffectModel` with `DrawContent` capturing text drawing logic
 
-**newRevolveRenderer(lines, bgColor, effect, font)** → renderFn
-- Captures font, orbit geometry, character layout (using provided opentype.Font)
-- Per-frame: calls effect(frame, total), applies RevolveOffset to character angles, renders with ScrollX/Y
+**buildRevolveEffect(font, spec)** → `func(frame, total int) EffectModel`
+- Computes orbit geometry (orbit radius, character positions) from font metrics
+- Per-frame closure: resolves color, returns `EffectModel` with `DrawContent` capturing revolve drawing logic
+
+**DrawContent** (`func(*gg.Context, FrameParams)` stored in EffectModel):
+- Text mode: applies scale/rotate transforms, draws lines with scroll tiling
+- Revolve mode: uses `drawChars` local helper, applies scroll via `compositeWithWrap` when needed
 
 ### GIF Assembly (render/rendergif.go)
 
@@ -131,11 +133,11 @@ composeEffects(effects...) → frameEffect that merges all parameters
 1. Parse text into lines (split by `\`)
 2. Load font from `cfg.Font` (already resolved to absolute path in main.go)
 3. Convert hex color string → RGBA
-4. Convert animation strings to (set, reverse) flags via `animToFlags()`
-5. Build effect function composition via `buildRenderer(font, opts...)` using Functional Option pattern:
+4. Convert animation strings to `*bool` flags via `animToFlags()`
+5. Build effect function via `buildEffect(font, opts...)` using Functional Option pattern:
    - `withLines()`, `withBg()`: Store base configuration
-   - `withScrollX()`, `withScrollY()`, `withRotate()`, `withRevolve()`: Add effects
-   - `buildRenderer()` dispatches to `newTextRenderer()` or `newRevolveRenderer()` with font + composed effect
+   - `withScrollX()`, `withScrollY()`, `withRotate()`, `withRevolve()`, `withPulse()`, `withGaming()`: Add effects
+   - `buildEffect()` dispatches to `buildTextEffect()` or `buildRevolveEffect()`
 6. Check if animation needed → call `composeGIF()` or render static frame
 7. Encode output (GIF or PNG) to file
 
@@ -193,9 +195,9 @@ To add a new animation effect (e.g., `--skew`):
    }
    ```
 
-4. **render/render.go or render/revolve.go**: Apply the new parameter in renderer
-   - In `newTextRenderer`: use `params.SkewAngle` to transform context
-   - In `newRevolveRenderer`: use `params.SkewAngle` to adjust character positioning
+4. **render/render.go**: Apply the new parameter inside the `DrawContent` closure in `buildTextEffect` / `buildRevolveEffect`
+   - In `buildTextEffect` DrawContent: use `p.SkewAngle` to transform context
+   - In `buildRevolveEffect` DrawContent: use `p.SkewAngle` to adjust character positioning
 
 5. **config/emoconfig.go**: Add config field with `json` and `mapstructure` tags
    ```go

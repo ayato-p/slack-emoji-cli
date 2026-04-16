@@ -127,24 +127,11 @@ type FrameParams struct {
 // EffectModel is a per-frame DTO that carries all information needed to render a single frame.
 // It is produced by the effect function returned from buildEffect and consumed by renderFrame.
 type EffectModel struct {
-	// Common fields
-	BGColor   color.Color
-	FontColor color.Color // resolved for this frame (colorEffect already applied)
-	FontFace  font.Face
-	Params    FrameParams
-
-	// IsRevolve selects the rendering path.
-	IsRevolve bool
-
-	// Text mode fields (IsRevolve == false)
-	Lines     []string
-	Baseline0 float64 // y-coordinate of the first line's baseline
-	LineH     float64 // per-line height increment (ascent + descent)
-
-	// Revolve mode fields (IsRevolve == true)
-	Chars          []string // one element per Unicode code point, flattened from Lines
-	OrbitRadius    float64
-	HalfMetricSpan float64 // (ascent - descent) / 2, converts orbit-center Y to baseline Y
+	BGColor     color.Color
+	FontColor   color.Color // resolved for this frame (colorEffect already applied)
+	FontFace    font.Face
+	Params      FrameParams
+	DrawContent func(ctx *gg.Context, params FrameParams)
 }
 
 // frameEffect computes per-frame animation parameters.
@@ -382,10 +369,67 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 			FontColor: fc,
 			FontFace:  face,
 			Params:    params,
-			IsRevolve: false,
-			Lines:     lines,
-			Baseline0: baseline0,
-			LineH:     lineH,
+			DrawContent: func(ctx *gg.Context, p FrameParams) {
+				ctx.Push()
+
+				s := 1.0 + p.SizeScale
+				if s < 0.001 {
+					s = 0.001
+				}
+
+				if p.SizeScale != 0 || p.RotationAngle != 0 {
+					ctx.Translate(canvasSize/2, canvasSize/2)
+					if p.SizeScale != 0 {
+						ctx.Scale(s, s)
+					}
+					if p.RotationAngle != 0 {
+						ctx.Rotate(p.RotationAngle)
+					}
+					ctx.Translate(-canvasSize/2, -canvasSize/2)
+				}
+
+				hasScrollX := p.ScrollTileW > 0
+				hasScrollY := p.ScrollTileH > 0
+
+				if hasScrollX || hasScrollY {
+					scrollXPre := 0.0
+					if hasScrollX {
+						scrollXPre = p.ScrollX / s
+					}
+					scrollYPre := 0.0
+					if hasScrollY {
+						scrollYPre = p.ScrollY / s
+					}
+
+					kMin, kMax := 0, 0
+					if hasScrollX {
+						nk := int(math.Ceil(canvasSize/(s*p.ScrollTileW))) + 2
+						kMin, kMax = -nk, nk
+					}
+					lMin, lMax := 0, 0
+					if hasScrollY {
+						nl := int(math.Ceil(canvasSize/(s*p.ScrollTileH))) + 2
+						lMin, lMax = -nl, nl
+					}
+
+					for k := kMin; k <= kMax; k++ {
+						for l := lMin; l <= lMax; l++ {
+							for i, line := range lines {
+								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
+								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
+								ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+							}
+						}
+					}
+				} else {
+					for i, line := range lines {
+						baseline := baseline0 + float64(i)*lineH
+						ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+					}
+				}
+
+				ctx.Pop()
+			},
 		}
 	}, nil
 }
@@ -493,171 +537,59 @@ func buildRevolveEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total
 			fc = colorEffect(frame, total)
 		}
 		return EffectModel{
-			BGColor:        bgColor,
-			FontColor:      fc,
-			FontFace:       face,
-			Params:         params,
-			IsRevolve:      true,
-			Chars:          chars,
-			OrbitRadius:    orbitRadius,
-			HalfMetricSpan: halfMetricSpan,
+			BGColor:   bgColor,
+			FontColor: fc,
+			FontFace:  face,
+			Params:    params,
+			DrawContent: func(ctx *gg.Context, p FrameParams) {
+				N := len(chars)
+				if N == 0 {
+					return
+				}
+
+				const startAngle = -3 * math.Pi / 4
+				cx, cy := float64(canvasSize)/2, float64(canvasSize)/2
+
+				drawChars := func(target *gg.Context) {
+					target.SetFontFace(face)
+					target.SetColor(fc)
+					target.Push()
+					if p.SizeScale != 0 {
+						s := 1.0 + p.SizeScale
+						target.Translate(canvasSize/2, canvasSize/2)
+						target.Scale(s, s)
+						target.Translate(-canvasSize/2, -canvasSize/2)
+					}
+					for k, ch := range chars {
+						theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + p.RevolveOffset
+						x := cx + orbitRadius*math.Cos(theta)
+						yOrbit := cy + orbitRadius*math.Sin(theta)
+						baseline := yOrbit + halfMetricSpan
+						target.DrawStringAnchored(ch, x, baseline, 0.5, 0)
+					}
+					target.Pop()
+				}
+
+				if p.ScrollX != 0 || p.ScrollY != 0 {
+					offscreen := gg.NewContext(canvasSize, canvasSize)
+					drawChars(offscreen)
+					compositeWithWrap(ctx, offscreen.Image(), p.ScrollX, p.ScrollY, canvasSize, canvasSize)
+				} else {
+					drawChars(ctx)
+				}
+			},
 		}
 	}, nil
 }
 
-// renderFrame dispatches to the appropriate renderer based on EffectModel.IsRevolve.
+// renderFrame renders a single frame from the given EffectModel.
 func renderFrame(m EffectModel) image.Image {
-	if m.IsRevolve {
-		return renderRevolveFrame(m)
-	}
-	return renderTextFrame(m)
-}
-
-// renderTextFrame renders a single text frame from the given EffectModel.
-// All required state (font face, layout, animation params, colors) comes from m.
-func renderTextFrame(m EffectModel) image.Image {
-	params := m.Params
-
 	ctx := gg.NewContext(canvasSize, canvasSize)
-
-	// Fill background
 	r, g, b, a := m.BGColor.RGBA()
-	ctx.SetRGBA(
-		float64(r)/0xffff,
-		float64(g)/0xffff,
-		float64(b)/0xffff,
-		float64(a)/0xffff,
-	)
+	ctx.SetRGBA(float64(r)/0xffff, float64(g)/0xffff, float64(b)/0xffff, float64(a)/0xffff)
 	ctx.Clear()
-
 	ctx.SetFontFace(m.FontFace)
 	ctx.SetColor(m.FontColor)
-	ctx.Push()
-
-	s := 1.0 + params.SizeScale
-	if s < 0.001 {
-		s = 0.001
-	}
-
-	if params.SizeScale != 0 || params.RotationAngle != 0 {
-		ctx.Translate(canvasSize/2, canvasSize/2)
-		if params.SizeScale != 0 {
-			ctx.Scale(s, s)
-		}
-		if params.RotationAngle != 0 {
-			ctx.Rotate(params.RotationAngle)
-		}
-		ctx.Translate(-canvasSize/2, -canvasSize/2)
-	}
-
-	hasScrollX := params.ScrollTileW > 0
-	hasScrollY := params.ScrollTileH > 0
-
-	if hasScrollX || hasScrollY {
-		scrollXPre := 0.0
-		if hasScrollX {
-			scrollXPre = params.ScrollX / s
-		}
-		scrollYPre := 0.0
-		if hasScrollY {
-			scrollYPre = params.ScrollY / s
-		}
-
-		kMin, kMax := 0, 0
-		if hasScrollX {
-			nk := int(math.Ceil(canvasSize/(s*params.ScrollTileW))) + 2
-			kMin, kMax = -nk, nk
-		}
-		lMin, lMax := 0, 0
-		if hasScrollY {
-			nl := int(math.Ceil(canvasSize/(s*params.ScrollTileH))) + 2
-			lMin, lMax = -nl, nl
-		}
-
-		for k := kMin; k <= kMax; k++ {
-			for l := lMin; l <= lMax; l++ {
-				for i, line := range m.Lines {
-					x := canvasSize/2.0 + scrollXPre + float64(k)*params.ScrollTileW
-					y := m.Baseline0 + scrollYPre + float64(l)*params.ScrollTileH + float64(i)*m.LineH
-					ctx.DrawStringAnchored(line, x, y, 0.5, 0)
-				}
-			}
-		}
-	} else {
-		for i, line := range m.Lines {
-			baseline := m.Baseline0 + float64(i)*m.LineH
-			ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
-		}
-	}
-
-	ctx.Pop()
-	return ctx.Image()
-}
-
-// renderRevolveFrame renders a single revolve animation frame from the given EffectModel.
-// Characters in m.Chars are arranged in a circle and orbited by m.Params.RevolveOffset.
-func renderRevolveFrame(m EffectModel) image.Image {
-	ctx := gg.NewContext(canvasSize, canvasSize)
-
-	// Fill background
-	cr, cg, cb, ca := m.BGColor.RGBA()
-	ctx.SetRGBA(
-		float64(cr)/0xffff,
-		float64(cg)/0xffff,
-		float64(cb)/0xffff,
-		float64(ca)/0xffff,
-	)
-	ctx.Clear()
-
-	N := len(m.Chars)
-	if N == 0 {
-		return ctx.Image()
-	}
-
-	params := m.Params
-	cx, cy := float64(canvasSize)/2, float64(canvasSize)/2
-	const startAngle = -3 * math.Pi / 4
-
-	ctx.SetFontFace(m.FontFace)
-	ctx.SetColor(m.FontColor)
-
-	if params.ScrollX != 0 || params.ScrollY != 0 {
-		offscreen := gg.NewContext(canvasSize, canvasSize)
-		offscreen.SetFontFace(m.FontFace)
-		offscreen.SetColor(m.FontColor)
-		offscreen.Push()
-		if params.SizeScale != 0 {
-			s := 1.0 + params.SizeScale
-			offscreen.Translate(canvasSize/2, canvasSize/2)
-			offscreen.Scale(s, s)
-			offscreen.Translate(-canvasSize/2, -canvasSize/2)
-		}
-		for k, ch := range m.Chars {
-			theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + params.RevolveOffset
-			x := cx + m.OrbitRadius*math.Cos(theta)
-			yOrbit := cy + m.OrbitRadius*math.Sin(theta)
-			baseline := yOrbit + m.HalfMetricSpan
-			offscreen.DrawStringAnchored(ch, x, baseline, 0.5, 0)
-		}
-		offscreen.Pop()
-		compositeWithWrap(ctx, offscreen.Image(), params.ScrollX, params.ScrollY, canvasSize, canvasSize)
-	} else {
-		ctx.Push()
-		if params.SizeScale != 0 {
-			s := 1.0 + params.SizeScale
-			ctx.Translate(canvasSize/2, canvasSize/2)
-			ctx.Scale(s, s)
-			ctx.Translate(-canvasSize/2, -canvasSize/2)
-		}
-		for k, ch := range m.Chars {
-			theta := startAngle - float64(k)*(2*math.Pi/float64(N)) + params.RevolveOffset
-			x := cx + m.OrbitRadius*math.Cos(theta)
-			yOrbit := cy + m.OrbitRadius*math.Sin(theta)
-			baseline := yOrbit + m.HalfMetricSpan
-			ctx.DrawStringAnchored(ch, x, baseline, 0.5, 0)
-		}
-		ctx.Pop()
-	}
-
+	m.DrawContent(ctx, m.Params)
 	return ctx.Image()
 }

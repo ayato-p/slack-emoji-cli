@@ -1,6 +1,7 @@
 package render
 
 import (
+	"image"
 	"image/color"
 	"math"
 	"testing"
@@ -8,6 +9,39 @@ import (
 	findfont "github.com/flopp/go-findfont"
 	"golang.org/x/image/font/opentype"
 )
+
+// hasNonBgPixels reports whether img contains any pixel that differs from bg.
+func hasNonBgPixels(img image.Image, bg color.Color) bool {
+	bgR, bgG, bgB, _ := bg.RGBA()
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, _ := img.At(x, y).RGBA()
+			if r != bgR || g != bgG || b != bgB {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// imagesEqual reports whether two images have identical pixel values.
+func imagesEqual(a, b image.Image) bool {
+	if a.Bounds() != b.Bounds() {
+		return false
+	}
+	bounds := a.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			ar, ag, ab, aa := a.At(x, y).RGBA()
+			br, bg2, bb, ba := b.At(x, y).RGBA()
+			if ar != br || ag != bg2 || ab != bb || aa != ba {
+				return false
+			}
+		}
+	}
+	return true
+}
 
 // testFont loads a system font for use in tests. The test is skipped if no
 // suitable font is found on the current machine.
@@ -60,43 +94,39 @@ func TestBuildEffect(t *testing.T) {
 	}{
 		// ── Group A: mode and content ──────────────────────────────────────────
 		{
-			name:  "text mode: IsRevolve false, Lines set",
+			name:  "text mode: renders text onto background",
 			opts:  []rendererOption{withLines([]string{"hello"}), withBg(white), withFontColor(black)},
 			frame: 0, total: 1,
 			check: func(t *testing.T, m EffectModel) {
-				if m.IsRevolve {
-					t.Error("expected IsRevolve=false for text mode")
+				img := renderFrame(m)
+				want := image.Rect(0, 0, canvasSize, canvasSize)
+				if img.Bounds() != want {
+					t.Errorf("image bounds: want %v, got %v", want, img.Bounds())
 				}
-				if len(m.Lines) != 1 || m.Lines[0] != "hello" {
-					t.Errorf("expected Lines=[hello], got %v", m.Lines)
-				}
-				if m.FontFace == nil {
-					t.Error("FontFace must not be nil")
+				if !hasNonBgPixels(img, white) {
+					t.Error("rendered image is all background; expected text to be drawn")
 				}
 			},
 		},
 		{
-			name:  "revolve mode: IsRevolve true, Chars split per rune",
+			name:  "revolve mode: renders characters in orbit, animation advances per frame",
 			opts:  []rendererOption{withLines([]string{"AB"}), withBg(white), withFontColor(black), withRevolve(boolPtr(false))},
-			frame: 0, total: 4,
+			frame: 0, total: 8,
 			check: func(t *testing.T, m EffectModel) {
-				if !m.IsRevolve {
-					t.Error("expected IsRevolve=true for revolve mode")
+				img0 := renderFrame(m)
+				if !hasNonBgPixels(img0, white) {
+					t.Error("frame 0 is all background; expected characters to be drawn")
 				}
-				want := []string{"A", "B"}
-				if len(m.Chars) != len(want) {
-					t.Fatalf("expected Chars=%v, got %v", want, m.Chars)
+				// Quarter orbit: characters should have moved to different positions.
+				effect2, err := buildEffect(f,
+					withLines([]string{"AB"}), withBg(white), withFontColor(black), withRevolve(boolPtr(false)),
+				)
+				if err != nil {
+					t.Fatalf("buildEffect error: %v", err)
 				}
-				for i, ch := range want {
-					if m.Chars[i] != ch {
-						t.Errorf("Chars[%d]: want %q, got %q", i, ch, m.Chars[i])
-					}
-				}
-				if m.OrbitRadius <= 0 {
-					t.Errorf("OrbitRadius must be > 0, got %f", m.OrbitRadius)
-				}
-				if m.FontFace == nil {
-					t.Error("FontFace must not be nil")
+				img2 := renderFrame(effect2(2, 8))
+				if imagesEqual(img0, img2) {
+					t.Error("frame 0 and frame 2 should differ: revolve animation should advance characters")
 				}
 			},
 		},
@@ -246,18 +276,27 @@ func TestBuildEffect(t *testing.T) {
 			},
 		},
 		{
-			name: "revolve + scrollX: IsRevolve true and ScrollX non-zero at frame=1",
+			name: "revolve + scrollX: ScrollX shifts rendered output vs revolve-only",
 			opts: []rendererOption{
 				withLines([]string{"AB"}), withBg(white), withFontColor(black),
 				withRevolve(boolPtr(false)), withScrollX(boolPtr(false)),
 			},
 			frame: 1, total: 4,
 			check: func(t *testing.T, m EffectModel) {
-				if !m.IsRevolve {
-					t.Error("expected IsRevolve=true")
-				}
 				if approxEq(m.Params.ScrollX, 0, eps) {
 					t.Errorf("ScrollX should be non-zero in revolve+scrollX, got %f", m.Params.ScrollX)
+				}
+				// Scroll should shift the rendered output relative to revolve-only at the same frame.
+				imgScrolled := renderFrame(m)
+				effectNoScroll, err := buildEffect(f,
+					withLines([]string{"AB"}), withBg(white), withFontColor(black), withRevolve(boolPtr(false)),
+				)
+				if err != nil {
+					t.Fatalf("buildEffect error: %v", err)
+				}
+				imgNoScroll := renderFrame(effectNoScroll(1, 4))
+				if imagesEqual(imgScrolled, imgNoScroll) {
+					t.Error("scrolled and non-scrolled revolve frames should differ at frame=1")
 				}
 			},
 		},
