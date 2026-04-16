@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"image/gif"
 	"image/png"
@@ -70,9 +71,12 @@ func Run(cfg config.EmoConfig) error {
 		withPulse(pulsing),
 	)
 
-	renderFn, err := buildRenderer(font, opts...)
+	effect, err := buildEffect(font, opts...)
 	if err != nil {
 		return fmt.Errorf("render error: %w", err)
+	}
+	renderFn := func(frame, total int) (image.Image, error) {
+		return renderFrame(effect(frame, total)), nil
 	}
 
 	// Check if animation is needed (gaming always requires animation)
