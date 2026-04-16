@@ -9,6 +9,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BINARY="/tmp/emo/emo"
+IMGCMP="/tmp/emo/imgcmp"
 TEST_TEXT="テスト"
 
 # ──────────────────────────────────────────────
@@ -19,6 +20,14 @@ build_binary() {
   echo "Building binary..."
   (cd "$PROJECT_ROOT" && go build -o "$BINARY" .)
   echo "Build complete: $BINARY"
+}
+
+# ──────────────────────────────────────────────
+# build_imgcmp: imgcmp ツールをビルドして /tmp/emo/imgcmp に配置
+# ──────────────────────────────────────────────
+build_imgcmp() {
+  mkdir -p /tmp/emo
+  (cd "$PROJECT_ROOT" && go build -o "$IMGCMP" ./tools/imgcmp/)
 }
 
 # ──────────────────────────────────────────────
@@ -113,6 +122,8 @@ compare() {
   shift 2
   local expected=("$@")
 
+  build_imgcmp
+
   echo ""
   echo "=== Integration Test Comparison ==="
   if [ ${#expected[@]} -gt 0 ]; then
@@ -154,7 +165,25 @@ compare() {
     hash_after=$(sha256sum "$after_file" | awk '{print $1}')
 
     local is_changed=false
-    [ "$hash_before" != "$hash_after" ] && is_changed=true
+    local visual_note=""
+    if [ "$hash_before" = "$hash_after" ]; then
+      is_changed=false
+    else
+      case "$filename" in
+        *.gif)
+          # GIF はパレット非決定性があるためピクセルレベルで比較
+          if "$IMGCMP" "$before_file" "$after_file" > /dev/null 2>&1; then
+            is_changed=false
+            visual_note=" (hash differs, visually same)"
+          else
+            is_changed=true
+          fi
+          ;;
+        *)
+          is_changed=true
+          ;;
+      esac
+    fi
 
     # expected に含まれるか確認
     local is_expected=false
@@ -173,11 +202,11 @@ compare() {
       if $is_changed; then
         printf "  [DIFF]  %-40s CHANGED\n" "$filename"
       else
-        printf "  [SAME]  %-40s unchanged\n" "$filename"
+        printf "  [SAME]  %-40s unchanged%s\n" "$filename" "$visual_note"
       fi
       pass=$((pass + 1))
     elif ! $is_changed && ! $is_expected; then
-      printf "  [PASS]  %-40s unchanged\n" "$filename"
+      printf "  [PASS]  %-40s unchanged%s\n" "$filename" "$visual_note"
       pass=$((pass + 1))
     elif $is_changed && $is_expected; then
       printf "  [PASS]  %-40s CHANGED  (expected)\n" "$filename"
