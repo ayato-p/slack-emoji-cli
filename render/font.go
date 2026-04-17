@@ -16,6 +16,11 @@ func loadFont(path string) (*opentype.Font, error) {
 	return opentype.Parse(data)
 }
 
+// loadFontBytes はバイト列からフォントを読み込みます（WASM環境用）。
+func loadFontBytes(data []byte) (*opentype.Font, error) {
+	return opentype.Parse(data)
+}
+
 // loadFace は与えられたフォントから指定サイズのフェイスを作成します。
 func loadFace(f *opentype.Font, size float64) (font.Face, error) {
 	return opentype.NewFace(f, &opentype.FaceOptions{

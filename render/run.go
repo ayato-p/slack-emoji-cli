@@ -6,15 +6,31 @@ import (
 	"image/color"
 	"image/gif"
 	"image/png"
+	"io"
 	"math"
 	"os"
 	"strings"
 
 	"github.com/ayato-p/slack-emoji-cli/config"
+	"golang.org/x/image/font/opentype"
 )
 
-// Run はEmoConfigに基づいて絵文字を生成・保存します。
+// Run はEmoConfigに基づいて絵文字を生成し、cfg.Out のファイルに保存します。
 func Run(cfg config.EmoConfig) error {
+	f, err := os.Create(cfg.Out)
+	if err != nil {
+		return fmt.Errorf("cannot create %s: %w", cfg.Out, err)
+	}
+	defer f.Close()
+	if err := RunTo(f, cfg); err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "saved: %s\n", cfg.Out)
+	return nil
+}
+
+// RunTo はEmoConfigに基づいて絵文字を生成し、w に書き出します。
+func RunTo(w io.Writer, cfg config.EmoConfig) error {
 	lines := strings.Split(cfg.Text, `\`)
 
 	bgColor, err := parseHexColor(cfg.Bg)
@@ -31,17 +47,15 @@ func Run(cfg config.EmoConfig) error {
 		}
 	}
 
-	// Load the font (path is already resolved in main.go)
-	font, err := loadFont(cfg.Font)
+	var font *opentype.Font
+	if len(cfg.FontData) > 0 {
+		font, err = loadFontBytes(cfg.FontData)
+	} else {
+		font, err = loadFont(cfg.Font)
+	}
 	if err != nil {
 		return fmt.Errorf("font error: %w", err)
 	}
-
-	f, err := os.Create(cfg.Out)
-	if err != nil {
-		return fmt.Errorf("cannot create %s: %w", cfg.Out, err)
-	}
-	defer f.Close()
 
 	// Compute frame timing based on speed
 	actualDelay := int(math.Round(float64(frameDelay) / cfg.Speed))
@@ -86,7 +100,7 @@ func Run(cfg config.EmoConfig) error {
 		if err != nil {
 			return fmt.Errorf("render error: %w", err)
 		}
-		if err := gif.EncodeAll(f, anim); err != nil {
+		if err := gif.EncodeAll(w, anim); err != nil {
 			return fmt.Errorf("gif encode error: %w", err)
 		}
 	} else {
@@ -94,12 +108,11 @@ func Run(cfg config.EmoConfig) error {
 		if err != nil {
 			return fmt.Errorf("render error: %w", err)
 		}
-		if err := png.Encode(f, img); err != nil {
+		if err := png.Encode(w, img); err != nil {
 			return fmt.Errorf("png encode error: %w", err)
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "saved: %s\n", cfg.Out)
 	return nil
 }
 

@@ -16,6 +16,9 @@ type EmoConfig struct {
 	FontColor string  `json:"font-color,omitempty" mapstructure:"font-color"`
 	Out       string  `json:"out,omitempty"      mapstructure:"out"`
 	Font      string  `json:"font,omitempty"     mapstructure:"font"`
+	// FontData はフォントファイルのバイト列を直接指定する（WASM環境用）。
+	// 設定されている場合、Font フィールドより優先される。
+	FontData []byte `json:"-" mapstructure:"-"`
 }
 
 // SetDefaults はゼロ値フィールドにデフォルト値を設定します。

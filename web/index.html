@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>slack-emoji-cli — Web Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    p.sub { font-size: 0.85rem; color: #94a3b8; margin-bottom: 2rem; }
+    .card { background: #1e293b; border-radius: 1rem; padding: 1.5rem; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 1rem; }
+    label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 0.25rem; }
+    input[type=text], select { width: 100%; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.95rem; }
+    .row { display: flex; gap: 0.75rem; }
+    .row > div { flex: 1; }
+    .color-row { display: flex; gap: 0.5rem; align-items: center; }
+    .color-row input[type=color] { width: 2.5rem; height: 2.2rem; border: none; background: transparent; cursor: pointer; border-radius: 0.25rem; }
+    .color-row input[type=text] { flex: 1; }
+    .checkboxes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .checkbox-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer; background: #0f172a; border: 1px solid #334155; border-radius: 0.4rem; padding: 0.3rem 0.6rem; user-select: none; }
+    .checkbox-label input { accent-color: #38bdf8; }
+    button#generate { background: #38bdf8; color: #0f172a; font-weight: 700; font-size: 1rem; border: none; border-radius: 0.5rem; padding: 0.65rem 1.5rem; cursor: pointer; transition: background 0.15s; }
+    button#generate:hover { background: #7dd3fc; }
+    button#generate:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
+    #status { font-size: 0.8rem; color: #94a3b8; min-height: 1.2em; }
+    #status.error { color: #f87171; }
+    #preview-wrap { display: none; flex-direction: column; align-items: center; gap: 0.75rem; }
+    #preview { image-rendering: pixelated; border-radius: 0.5rem; }
+    #download { background: #22c55e; color: #fff; font-size: 0.85rem; font-weight: 600; border: none; border-radius: 0.4rem; padding: 0.4rem 1rem; cursor: pointer; text-decoration: none; }
+    #download:hover { background: #16a34a; }
+  </style>
+</head>
+<body>
+  <h1>slack-emoji-cli</h1>
+  <p class="sub">Generate 128×128 Slack emoji images in your browser</p>
+
+  <div class="card">
+    <div>
+      <label>Text <span style="color:#64748b">(use \ for line break)</span></label>
+      <input type="text" id="text" value="Hello" placeholder="Hello\nWorld">
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Background color</label>
+        <div class="color-row">
+          <input type="color" id="bg-picker" value="#1D3557">
+          <input type="text" id="bg" value="#1D3557">
+        </div>
+      </div>
+      <div>
+        <label>Font color</label>
+        <div class="color-row">
+          <input type="color" id="fc-picker" value="#FFFFFF">
+          <input type="text" id="font-color" value="#FFFFFF">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label>Animation</label>
+      <div class="checkboxes">
+        <label class="checkbox-label"><input type="checkbox" id="rotate"> Rotate</label>
+        <label class="checkbox-label"><input type="checkbox" id="revolve"> Revolve</label>
+        <label class="checkbox-label"><input type="checkbox" id="scroll-x"> Scroll X</label>
+        <label class="checkbox-label"><input type="checkbox" id="scroll-y"> Scroll Y</label>
+        <label class="checkbox-label"><input type="checkbox" id="pulsing"> Pulsing</label>
+        <label class="checkbox-label"><input type="checkbox" id="gaming"> Gaming</label>
+      </div>
+    </div>
+
+    <div style="max-width:160px">
+      <label>Speed (0.5–2.0)</label>
+      <input type="text" id="speed" value="1.0">
+    </div>
+
+    <div style="display:flex;align-items:center;gap:1rem">
+      <button id="generate">Generate</button>
+      <span id="status"></span>
+    </div>
+
+    <div id="preview-wrap">
+      <img id="preview" width="128" height="128" alt="preview">
+      <a id="download" download="emoji.png">Download</a>
+    </div>
+  </div>
+
+  <script src="wasm_exec.js"></script>
+  <script>
+    const go = new Go();
+    let wasmReady = false;
+
+    WebAssembly.instantiateStreaming(fetch("emoji.wasm"), go.importObject).then(result => {
+      go.run(result.instance);
+      wasmReady = true;
+      document.getElementById("status").textContent = "Ready";
+    }).catch(e => {
+      document.getElementById("status").textContent = "Failed to load WASM: " + e;
+      document.getElementById("status").className = "error";
+    });
+
+    // Sync color pickers <-> text inputs
+    function syncColor(pickerId, textId) {
+      const picker = document.getElementById(pickerId);
+      const text = document.getElementById(textId);
+      picker.addEventListener("input", () => { text.value = picker.value; });
+      text.addEventListener("input", () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+      });
+    }
+    syncColor("bg-picker", "bg");
+    syncColor("fc-picker", "font-color");
+
+    document.getElementById("generate").addEventListener("click", () => {
+      if (!wasmReady) { alert("WASM not loaded yet"); return; }
+
+      const btn = document.getElementById("generate");
+      const status = document.getElementById("status");
+      btn.disabled = true;
+      status.className = "";
+      status.textContent = "Generating…";
+
+      // Build config object
+      const cfg = {
+        text: document.getElementById("text").value || "Hello",
+        bg: document.getElementById("bg").value,
+        "font-color": document.getElementById("gaming").checked ? "gaming" : document.getElementById("font-color").value,
+        speed: parseFloat(document.getElementById("speed").value) || 1.0,
+      };
+      if (document.getElementById("rotate").checked)   cfg.rotate   = "true";
+      if (document.getElementById("revolve").checked)  cfg.revolve  = "true";
+      if (document.getElementById("scroll-x").checked) cfg["scroll-x"] = "true";
+      if (document.getElementById("scroll-y").checked) cfg["scroll-y"] = "true";
+      if (document.getElementById("pulsing").checked)  cfg.pulsing  = "true";
+
+      // Run synchronously in next microtask to let UI update
+      setTimeout(() => {
+        try {
+          const result = generateEmoji(JSON.stringify(cfg));
+          if (result.error) {
+            status.textContent = "Error: " + result.error;
+            status.className = "error";
+          } else {
+            const dataURL = `data:${result.mimeType};base64,${result.data}`;
+            const img = document.getElementById("preview");
+            img.src = dataURL;
+            const dl = document.getElementById("download");
+            dl.href = dataURL;
+            dl.download = result.mimeType === "image/gif" ? "emoji.gif" : "emoji.png";
+            document.getElementById("preview-wrap").style.display = "flex";
+            status.textContent = "Done (" + result.mimeType.split("/")[1].toUpperCase() + ")";
+          }
+        } catch (e) {
+          status.textContent = "Error: " + e;
+          status.className = "error";
+        }
+        btn.disabled = false;
+      }, 0);
+    });
+  </script>
+</body>
+</html>
