@@ -15,7 +15,7 @@ go install github.com/ayato-p/slack-emoji-cli@latest
 ```bash
 git clone https://github.com/ayato-p/slack-emoji-cli.git
 cd slack-emoji-cli
-go build -o emo .
+go build -o emo ./cmd/emo
 ```
 
 ## フォント

@@ -24,7 +24,7 @@
     ],
     "FileChanged": [
       {
-        "matcher": "config/emoconfig.go",
+        "matcher": "internal/config/emoconfig.go",
         "hooks": [
           {
             "type": "command",

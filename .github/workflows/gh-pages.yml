@@ -22,7 +22,7 @@ jobs:
           go-version-file: go.mod
 
       - name: ビルド
-        run: go build -o emo .
+        run: go build -o emo ./cmd/emo
 
       - name: CJK フォントをインストール
         run: |

@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ayato-p/slack-emoji-cli/config"
+	"github.com/ayato-p/slack-emoji-cli/internal/config"
 )
 
 // Run はEmoConfigに基づいて絵文字を生成・保存します。
@@ -31,7 +31,7 @@ func Run(cfg config.EmoConfig) error {
 		}
 	}
 
-	// Load the font (path is already resolved in main.go)
+	// Load the font (path is already resolved in cmd/emo/main.go)
 	font, err := loadFont(cfg.Font)
 	if err != nil {
 		return fmt.Errorf("font error: %w", err)

@@ -14,9 +14,9 @@ This applies to any code writing, editing, or architectural decision. Orientatio
 
 | Command | Description |
 |---|---|
-| `go build -o emo .` | Build |
+| `go build -o emo ./cmd/emo` | Build |
 | `./emo [options] TEXT` | Run (e.g., `./emo 'hello'`) |
-| `go install .` | Install to `$GOBIN` |
+| `go install ./cmd/emo` | Install to `$GOBIN` |
 
 ## Permissions
 
@@ -49,7 +49,7 @@ CLI Args (cobra flags)
   ↓
 viper.BindPFlags() + viper.Unmarshal()
   ↓
-EmoConfig (config/emoconfig.go)
+EmoConfig (internal/config/emoconfig.go)
   ↓
 render.Run(cfg)
   ↓
@@ -58,16 +58,30 @@ PNG (static) or GIF (animated)
 
 ### Package Organization
 
+Follows the Go standard CLI layout: entry points live under `cmd/<bin>/`, and
+internal packages (not importable by other modules) live under `internal/`.
+
+```
+slack-emoji-cli/
+├── cmd/
+│   ├── emo/main.go        ← main CLI entry point
+│   └── imgcmp/main.go     ← image-compare helper used by integration tests
+└── internal/
+    ├── config/            ← EmoConfig, defaults, validation
+    └── render/            ← rendering orchestration + effects
+```
+
 | Path | Role |
 |---|---|
-| `config/emoconfig.go` | Central config struct, `SetDefaults()`, `Validate()` |
-| `render/run.go` | Orchestrator — dispatches to specific renderers |
-| `render/render.go` | Static PNG rendering |
-| `render/rendergif.go` | Animated GIF with transformers |
-| `render/revolve.go` | Revolve animation (characters orbit canvas center) |
-| `render/transformer.go` | Animation transformer interface + Rotate type |
-| `render/font.go` | Font loading and text measurement |
-| `main.go` | cobra.Command definition, flag registration, font resolution |
+| `internal/config/emoconfig.go` | Central config struct, `SetDefaults()`, `Validate()` |
+| `internal/render/run.go` | Orchestrator — dispatches to specific renderers |
+| `internal/render/render.go` | Static PNG rendering |
+| `internal/render/rendergif.go` | Animated GIF with transformers |
+| `internal/render/revolve.go` | Revolve animation (characters orbit canvas center) |
+| `internal/render/transformer.go` | Animation transformer interface + Rotate type |
+| `internal/render/font.go` | Font loading and text measurement |
+| `cmd/emo/main.go` | cobra.Command definition, flag registration, font resolution |
+| `cmd/imgcmp/main.go` | Pixel-level image comparison tool |
 
 ### Key Design Patterns
 
@@ -95,17 +109,17 @@ Animation flags hold three states: `""` (off), `"true"` (normal), `"reverse"` (r
 
 ### New Animation Option
 
-1. **`config/emoconfig.go`** — add field:
+1. **`internal/config/emoconfig.go`** — add field:
    ```go
    MyAnim string `json:"my-anim,omitempty" mapstructure:"my-anim"`
    ```
-2. **`config/emoconfig.go`** — add mutual exclusion in `Validate()` if needed
-3. **`main.go`** — register flag with `NoOptDefVal`:
+2. **`internal/config/emoconfig.go`** — add mutual exclusion in `Validate()` if needed
+3. **`cmd/emo/main.go`** — register flag with `NoOptDefVal`:
    ```go
    f.String("my-anim", "", "description")
    f.Lookup("my-anim").NoOptDefVal = "true"
    ```
-4. **`render/run.go`** — dispatch in `Run()`:
+4. **`internal/render/run.go`** — dispatch in `Run()`:
    ```go
    myAnim := animToFlags(cfg.MyAnim)
    opts = append(opts, withMyAnim(myAnim))
@@ -113,16 +127,16 @@ Animation flags hold three states: `""` (off), `"true"` (normal), `"reverse"` (r
 
 ### New Configuration Option (Non-Animation)
 
-1. **`config/emoconfig.go`** — add field:
+1. **`internal/config/emoconfig.go`** — add field:
    ```go
    Blur float64 `json:"blur,omitempty" mapstructure:"blur"`
    ```
-2. **`config/emoconfig.go`** — add validation in `Validate()` / defaults in `SetDefaults()`
-3. **`main.go`** — register flag (no `NoOptDefVal`):
+2. **`internal/config/emoconfig.go`** — add validation in `Validate()` / defaults in `SetDefaults()`
+3. **`cmd/emo/main.go`** — register flag (no `NoOptDefVal`):
    ```go
    f.Float64("blur", 0, "blur radius (0–10)")
    ```
-4. **`render/`** — use the new field in rendering functions
+4. **`internal/render/`** — use the new field in rendering functions
 
 ### Update GitHub Actions Samples
 
@@ -149,7 +163,7 @@ Guidelines: group related samples, include 3–4 representative examples, use `{
 **Speed** (`--speed`, range 0.5–2.0):  
 Controls GIF frame count; validated in `config.Validate()`.
 
-**Color parsing** (`render/run.go`):  
+**Color parsing** (`internal/render/run.go`):  
 Accepts `#RGB`, `#RRGGBB`, `#RRGGBBAA`, or `"transparent"`. Returns `color.RGBA`.
 
 ---
