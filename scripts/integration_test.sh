@@ -18,7 +18,7 @@ TEST_TEXT="テスト"
 build_binary() {
   mkdir -p /tmp/emo
   echo "Building binary..."
-  (cd "$PROJECT_ROOT" && go build -o "$BINARY" .)
+  (cd "$PROJECT_ROOT" && go build -o "$BINARY" ./cmd/emo)
   echo "Build complete: $BINARY"
 }
 
@@ -27,7 +27,7 @@ build_binary() {
 # ──────────────────────────────────────────────
 build_imgcmp() {
   mkdir -p /tmp/emo
-  (cd "$PROJECT_ROOT" && go build -o "$IMGCMP" ./tools/imgcmp/)
+  (cd "$PROJECT_ROOT" && go build -o "$IMGCMP" ./cmd/imgcmp)
 }
 
 # ──────────────────────────────────────────────

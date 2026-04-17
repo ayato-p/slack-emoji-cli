@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ayato-p/slack-emoji-cli/config"
-	"github.com/ayato-p/slack-emoji-cli/render"
+	"github.com/ayato-p/slack-emoji-cli/internal/config"
+	"github.com/ayato-p/slack-emoji-cli/internal/render"
 	"github.com/flopp/go-findfont"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

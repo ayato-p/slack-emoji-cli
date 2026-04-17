@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-slack-emoji-cli
+/slack-emoji-cli
 
 # Test binary
 *.test
@@ -29,5 +29,5 @@ dist/
 *.gif
 *.webp
 
-emo
+/emo
 

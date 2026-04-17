@@ -2,24 +2,32 @@
 
 ## Package Structure
 
+Follows the Go standard CLI layout: binaries under `cmd/<bin>/`, internal
+packages (not importable from outside the module) under `internal/`.
+
 ```
-main.go
+cmd/
+├── emo/
+│   └── main.go            # CLI entry: cobra/viper wiring, font resolution
+└── imgcmp/
+    └── main.go            # Image-compare helper used by integration tests
+internal/
 ├── config/
 │   └── emoconfig.go       # EmoConfig struct, validation, defaults
-├── render/
-│   ├── run.go             # Run(EmoConfig) - orchestrates rendering
-│   ├── render.go          # Effect system, layout builders, unified renderFrame
-│   ├── rendergif.go       # GIF assembly + compositeWithWrap
-│   └── font.go            # Font utilities
+└── render/
+    ├── run.go             # Run(EmoConfig) - orchestrates rendering
+    ├── render.go          # Effect system, layout builders, unified renderFrame
+    ├── rendergif.go       # GIF assembly + compositeWithWrap
+    └── font.go            # Font utilities
 ```
 
 ## Dependency Graph
 
 ```
-main.go (CLI entry)
-  ├─→ config/ (EmoConfig, validation)
-  └─→ render/ (Run)
-        ├─→ config/ (EmoConfig)
+cmd/emo/main.go (CLI entry)
+  ├─→ internal/config/ (EmoConfig, validation)
+  └─→ internal/render/ (Run)
+        ├─→ internal/config/ (EmoConfig)
         ├─→ buildEffect() → func(frame, total int) EffectModel
         └─→ renderFrame(EffectModel) → image.Image
               └─→ EffectModel.DrawContent(ctx, params)
@@ -60,10 +68,10 @@ viper.Unmarshal() → EmoConfig
 
 ## EmoConfig Design
 
-`config/emoconfig.go` defines:
+`internal/config/emoconfig.go` defines:
 - **EmoConfig struct**: Central configuration representation
   - `Text`: Required positional argument
-  - `Font`: Font file path (resolved in main.go; empty = system default)
+  - `Font`: Font file path (resolved in cmd/emo/main.go; empty = system default)
   - Animation flags: `Rotate`, `Revolve`, `ScrollX`, `ScrollY` (values: `""` / `"true"` / `"reverse"`)
   - `Speed`: Animation speed multiplier (0.5–2.0)
   - `Bg`: Background color (hex or `"transparent"`)
@@ -78,7 +86,7 @@ viper.Unmarshal() → EmoConfig
 
 ## Rendering Orchestration
 
-### Frame Effect Composition (render/render.go)
+### Frame Effect Composition (internal/render/render.go)
 
 **FrameParams**: Encapsulates per-frame animation state
 ```go
@@ -106,7 +114,7 @@ type frameEffect func(frame, total int) FrameParams
 composeEffects(effects...) → frameEffect that merges all parameters
 ```
 
-### Effect Builders (render/render.go)
+### Effect Builders (internal/render/render.go)
 
 **buildTextEffect(font, spec)** → `func(frame, total int) EffectModel`
 - Computes text layout (font metrics, baseline, scroll tile sizes)
@@ -120,18 +128,18 @@ composeEffects(effects...) → frameEffect that merges all parameters
 - Text mode: applies scale/rotate transforms, draws lines with scroll tiling
 - Revolve mode: uses `drawChars` local helper, applies scroll via `compositeWithWrap` when needed
 
-### GIF Assembly (render/rendergif.go)
+### GIF Assembly (internal/render/rendergif.go)
 
 **composeGIF(renderFn, numFrames, delay)** → *gif.GIF
 - Calls renderFn for each frame
 - Converts to paletted image + Floyd-Steinberg dithering
 - Assembles into GIF with uniform delay
 
-### Run() Orchestration (render/run.go)
+### Run() Orchestration (internal/render/run.go)
 
-`render/run.go` implements `Run(EmoConfig)`:
+`internal/render/run.go` implements `Run(EmoConfig)`:
 1. Parse text into lines (split by `\`)
-2. Load font from `cfg.Font` (already resolved to absolute path in main.go)
+2. Load font from `cfg.Font` (already resolved to absolute path in cmd/emo/main.go)
 3. Convert hex color string → RGBA
 4. Convert animation strings to `*bool` flags via `animToFlags()`
 5. Build effect function via `buildEffect(font, opts...)` using Functional Option pattern:
@@ -143,7 +151,7 @@ composeEffects(effects...) → frameEffect that merges all parameters
 
 ## CLI Integration
 
-`main.go` uses cobra + viper:
+`cmd/emo/main.go` uses cobra + viper:
 - **cobra.Command**: Defines command structure and positional argument validation
 - **pflag strings** with `NoOptDefVal = "true"`: Allows `--rotate` to become `"true"` and `--rotate=reverse` to become `"reverse"`
 - **viper.BindPFlags()**: Links pflag values into viper's config store
@@ -167,7 +175,7 @@ composeEffects(effects...) → frameEffect that merges all parameters
 
 To add a new animation effect (e.g., `--skew`):
 
-1. **render/render.go**: Define an effect function
+1. **internal/render/render.go**: Define an effect function
    ```go
    func skewEffect(reverse bool) frameEffect {
        return func(frame, total int) FrameParams {
@@ -178,7 +186,7 @@ To add a new animation effect (e.g., `--skew`):
    }
    ```
 
-2. **render/render.go**: Add a rendererOption helper
+2. **internal/render/render.go**: Add a rendererOption helper
    ```go
    func withSkew(reverse bool) rendererOption {
        return func(s *rendererSpec) { 
@@ -187,7 +195,7 @@ To add a new animation effect (e.g., `--skew`):
    }
    ```
 
-3. **render/render.go**: Update `FrameParams` if needed to carry new animation data
+3. **internal/render/render.go**: Update `FrameParams` if needed to carry new animation data
    ```go
    type FrameParams struct {
        // ... existing fields
@@ -195,26 +203,26 @@ To add a new animation effect (e.g., `--skew`):
    }
    ```
 
-4. **render/render.go**: Apply the new parameter inside the `DrawContent` closure in `buildTextEffect` / `buildRevolveEffect`
+4. **internal/render/render.go**: Apply the new parameter inside the `DrawContent` closure in `buildTextEffect` / `buildRevolveEffect`
    - In `buildTextEffect` DrawContent: use `p.SkewAngle` to transform context
    - In `buildRevolveEffect` DrawContent: use `p.SkewAngle` to adjust character positioning
 
-5. **config/emoconfig.go**: Add config field with `json` and `mapstructure` tags
+5. **internal/config/emoconfig.go**: Add config field with `json` and `mapstructure` tags
    ```go
    type EmoConfig struct {
        Skew string `json:"skew,omitempty" mapstructure:"skew"`  // "" / "true" / "reverse"
    }
    ```
 
-6. **config/emoconfig.go**: Update `Validate()` if constraints apply (mutual exclusions, etc.)
+6. **internal/config/emoconfig.go**: Update `Validate()` if constraints apply (mutual exclusions, etc.)
 
-7. **main.go**: Register flag in `init()`, set `NoOptDefVal` if boolean-like
+7. **cmd/emo/main.go**: Register flag in `init()`, set `NoOptDefVal` if boolean-like
    ```go
    f.String("skew", "", "skew animation")
    f.Lookup("skew").NoOptDefVal = "true"
    ```
 
-8. **render/run.go**: Add to option builder in `Run()`
+8. **internal/render/run.go**: Add to option builder in `Run()`
    ```go
    skewSet, skewReverse := animToFlags(cfg.Skew)
    if skewSet {
@@ -228,23 +236,23 @@ Example (`--blur` parameter, not animating):
 
 1. **FrameParams** does not need updating (blur is not frame-dependent)
 
-2. **render/render.go or render/revolve.go**: Pass blur value as a captured variable in the renderer factory
+2. **internal/render/render.go or internal/render/revolve.go**: Pass blur value as a captured variable in the renderer factory
    - Store in rendererSpec and pass to newTextRenderer/newRevolveRenderer
    - Apply during rendering based on the blur value
 
-3. **config/emoconfig.go**: Add field
+3. **internal/config/emoconfig.go**: Add field
    ```go
    type EmoConfig struct {
        Blur float64 `json:"blur,omitempty" mapstructure:"blur"`
    }
    ```
 
-4. **main.go**: Register flag
+4. **cmd/emo/main.go**: Register flag
    ```go
    f.Float64("blur", 0, "blur radius (0–10)")
    ```
 
-5. **render/run.go**: Include in rendererSpec/buildRenderer if needed
+5. **internal/render/run.go**: Include in rendererSpec/buildRenderer if needed
    ```go
    opts = append(opts, withBlur(cfg.Blur))
    ```
@@ -252,19 +260,19 @@ Example (`--blur` parameter, not animating):
 ## Validation Invariants
 
 - `Text` must be non-empty (required positional)
-- `Rotate` and `Revolve` are mutually exclusive (validated in config/emoconfig.go)
-- Animation string values must be `""`, `"true"`, or `"reverse"` (validated in config/emoconfig.go)
-- `Speed` must be in [0.5, 2.0] (validated in config/emoconfig.go)
-- Output file extension determines format (currently not validated, inferred from animation flags in config/emoconfig.go)
+- `Rotate` and `Revolve` are mutually exclusive (validated in internal/config/emoconfig.go)
+- Animation string values must be `""`, `"true"`, or `"reverse"` (validated in internal/config/emoconfig.go)
+- `Speed` must be in [0.5, 2.0] (validated in internal/config/emoconfig.go)
+- Output file extension determines format (currently not validated, inferred from animation flags in internal/config/emoconfig.go)
 
 ## Design Principles
 
 ### Separation of Concerns
 
-1. **Config layer** (config/emoconfig.go): Validates user intent, converts flags to (set, reverse) pairs
-2. **Effect layer** (render/render.go): Each effect independently computes per-frame parameters
-3. **Renderer layer** (render/render.go, render/revolve.go): Applies effects to graphics, handles rendering
-4. **Assembly layer** (render/rendergif.go): Composes frames into GIF
+1. **Config layer** (internal/config/emoconfig.go): Validates user intent, converts flags to (set, reverse) pairs
+2. **Effect layer** (internal/render/render.go): Each effect independently computes per-frame parameters
+3. **Renderer layer** (internal/render/render.go, internal/render/revolve.go): Applies effects to graphics, handles rendering
+4. **Assembly layer** (internal/render/rendergif.go): Composes frames into GIF
 
 ### Composability
 

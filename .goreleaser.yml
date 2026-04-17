@@ -3,7 +3,7 @@ version: 2
 builds:
   - id: emo
     binary: emo
-    main: .
+    main: ./cmd/emo
     env:
       - CGO_ENABLED=0
     goos:
