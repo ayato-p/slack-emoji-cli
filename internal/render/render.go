@@ -77,12 +77,20 @@ func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, f
 
 		fits := totalHeight <= drawArea
 		if fits {
+			// For multi-line text, only the shortest line constrains width — wider lines
+			// will be compressed to drawArea at draw time.
+			var minW float64
 			for _, line := range lines {
-				w, _ := ctx.MeasureString(line)
-				if w > drawArea {
-					fits = false
-					break
+				if line == "" {
+					continue
 				}
+				w, _ := ctx.MeasureString(line)
+				if minW == 0 || w < minW {
+					minW = w
+				}
+			}
+			if minW > drawArea {
+				fits = false
 			}
 		}
 		if fits {
@@ -326,35 +334,33 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 	n := len(spec.lines)
 	lineH := ascent + descent
 
-	// Measure each line width; minLineW is the compression target for wider lines.
+	// Measure each line's natural width to determine which lines need compression.
 	mctx := gg.NewContext(canvasSize, canvasSize)
 	mctx.SetFontFace(face)
 	lineWidths := make([]float64, len(spec.lines))
-	minLineW := math.MaxFloat64
 	for i, line := range spec.lines {
 		if line == "" {
 			continue
 		}
 		w, _ := mctx.MeasureString(line)
 		lineWidths[i] = w
-		if w < minLineW {
-			minLineW = w
-		}
-	}
-	if minLineW == math.MaxFloat64 {
-		minLineW = 0
 	}
 
 	// Compute scroll tile sizes from font metrics and append scroll effects.
-	// Tile width uses minLineW so that compressed lines tile seamlessly.
+	// Tile width is the maximum rendered width (lines wider than drawArea are compressed to drawArea).
 	if spec.scrollX != nil {
-		tileW := minLineW
-		if tileW <= 0 {
-			for _, w := range lineWidths {
-				if w > tileW {
-					tileW = w
-				}
+		var tileW float64
+		for _, w := range lineWidths {
+			rendered := w
+			if rendered > drawArea {
+				rendered = drawArea
 			}
+			if rendered > tileW {
+				tileW = rendered
+			}
+		}
+		if tileW <= 0 {
+			tileW = drawArea
 		}
 		spec.effects = append(spec.effects, scrollXEffect(*spec.scrollX, tileW))
 	}
@@ -436,8 +442,8 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 							for i, line := range lines {
 								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
 								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
-								if minLineW > 0 && lineWidths[i] > minLineW {
-									xScale := minLineW / lineWidths[i]
+								if lineWidths[i] > drawArea {
+									xScale := drawArea / lineWidths[i]
 									ctx.Push()
 									ctx.Translate(x, y)
 									ctx.Scale(xScale, 1)
@@ -453,8 +459,8 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 				} else {
 					for i, line := range lines {
 						baseline := baseline0 + float64(i)*lineH
-						if minLineW > 0 && lineWidths[i] > minLineW {
-							xScale := minLineW / lineWidths[i]
+						if lineWidths[i] > drawArea {
+							xScale := drawArea / lineWidths[i]
 							ctx.Push()
 							ctx.Translate(canvasSize/2, baseline)
 							ctx.Scale(xScale, 1)
