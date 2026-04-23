@@ -326,15 +326,34 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 	n := len(spec.lines)
 	lineH := ascent + descent
 
+	// Measure each line width; minLineW is the compression target for wider lines.
+	mctx := gg.NewContext(canvasSize, canvasSize)
+	mctx.SetFontFace(face)
+	lineWidths := make([]float64, len(spec.lines))
+	minLineW := math.MaxFloat64
+	for i, line := range spec.lines {
+		if line == "" {
+			continue
+		}
+		w, _ := mctx.MeasureString(line)
+		lineWidths[i] = w
+		if w < minLineW {
+			minLineW = w
+		}
+	}
+	if minLineW == math.MaxFloat64 {
+		minLineW = 0
+	}
+
 	// Compute scroll tile sizes from font metrics and append scroll effects.
+	// Tile width uses minLineW so that compressed lines tile seamlessly.
 	if spec.scrollX != nil {
-		mctx := gg.NewContext(canvasSize, canvasSize)
-		mctx.SetFontFace(face)
-		var tileW float64
-		for _, line := range spec.lines {
-			w, _ := mctx.MeasureString(line)
-			if w > tileW {
-				tileW = w
+		tileW := minLineW
+		if tileW <= 0 {
+			for _, w := range lineWidths {
+				if w > tileW {
+					tileW = w
+				}
 			}
 		}
 		spec.effects = append(spec.effects, scrollXEffect(*spec.scrollX, tileW))
@@ -417,14 +436,34 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 							for i, line := range lines {
 								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
 								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
-								ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+								if minLineW > 0 && lineWidths[i] > minLineW {
+									xScale := minLineW / lineWidths[i]
+									ctx.Push()
+									ctx.Translate(x, y)
+									ctx.Scale(xScale, 1)
+									ctx.Translate(-x, -y)
+									ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+									ctx.Pop()
+								} else {
+									ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+								}
 							}
 						}
 					}
 				} else {
 					for i, line := range lines {
 						baseline := baseline0 + float64(i)*lineH
-						ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+						if minLineW > 0 && lineWidths[i] > minLineW {
+							xScale := minLineW / lineWidths[i]
+							ctx.Push()
+							ctx.Translate(canvasSize/2, baseline)
+							ctx.Scale(xScale, 1)
+							ctx.Translate(-canvasSize/2, -baseline)
+							ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+							ctx.Pop()
+						} else {
+							ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+						}
 					}
 				}
 
