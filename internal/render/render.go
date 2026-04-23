@@ -442,11 +442,10 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 							for i, line := range lines {
 								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
 								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
-								if lineWidths[i] > drawArea {
-									xScale := drawArea / lineWidths[i]
+								if lw := lineWidths[i]; lw > 0 && (len(lines) > 1 || lw > drawArea) {
 									ctx.Push()
 									ctx.Translate(x, y)
-									ctx.Scale(xScale, 1)
+									ctx.Scale(drawArea/lw, 1)
 									ctx.Translate(-x, -y)
 									ctx.DrawStringAnchored(line, x, y, 0.5, 0)
 									ctx.Pop()
@@ -459,11 +458,10 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 				} else {
 					for i, line := range lines {
 						baseline := baseline0 + float64(i)*lineH
-						if lineWidths[i] > drawArea {
-							xScale := drawArea / lineWidths[i]
+						if lw := lineWidths[i]; lw > 0 && (len(lines) > 1 || lw > drawArea) {
 							ctx.Push()
 							ctx.Translate(canvasSize/2, baseline)
-							ctx.Scale(xScale, 1)
+							ctx.Scale(drawArea/lw, 1)
 							ctx.Translate(-canvasSize/2, -baseline)
 							ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
 							ctx.Pop()
