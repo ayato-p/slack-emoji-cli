@@ -365,13 +365,22 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 		w, _ := mctx.MeasureString(line)
 		lineWidths[i] = w
 	}
+	nonEmptyLines := 0
+	for _, lw := range lineWidths {
+		if lw > 0 {
+			nonEmptyLines++
+		}
+	}
 
 	// Compute scroll tile sizes from font metrics and append scroll effects.
 	if spec.scrollX != nil {
 		var tileW float64
 		for _, w := range lineWidths {
+			if w == 0 {
+				continue
+			}
 			var rendered float64
-			if fitWidth && w > drawArea {
+			if (fitWidth && nonEmptyLines > 1) || w > drawArea {
 				rendered = drawArea
 			} else {
 				rendered = w
@@ -403,12 +412,6 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 	bgColor := spec.bgColor
 	fontColor := spec.fontColor
 	colorEffect := spec.colorEffect
-	nonEmptyLines := 0
-	for _, lw := range lineWidths {
-		if lw > 0 {
-			nonEmptyLines++
-		}
-	}
 
 	return func(frame, total int) EffectModel {
 		params := effect(frame, total)
@@ -469,7 +472,7 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 							for i, line := range lines {
 								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
 								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
-								if lw := lineWidths[i]; lw > 0 && (fitWidth && nonEmptyLines > 1 || lw > drawArea) {
+								if lw := lineWidths[i]; lw > 0 && ((fitWidth && nonEmptyLines > 1) || lw > drawArea) {
 									ctx.Push()
 									ctx.Translate(x, y)
 									ctx.Scale(drawArea/lw, 1)
@@ -485,7 +488,7 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 				} else {
 					for i, line := range lines {
 						baseline := baseline0 + float64(i)*lineH
-						if lw := lineWidths[i]; lw > 0 && (fitWidth && nonEmptyLines > 1 || lw > drawArea) {
+						if lw := lineWidths[i]; lw > 0 && ((fitWidth && nonEmptyLines > 1) || lw > drawArea) {
 							ctx.Push()
 							ctx.Translate(canvasSize/2, baseline)
 							ctx.Scale(drawArea/lw, 1)
