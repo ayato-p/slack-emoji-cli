@@ -5,17 +5,18 @@ import "fmt"
 // EmoConfig はすべての設定を保持する中間表現です。
 // CLIフラグからもJSONファイルからも同じ構造体に変換できます。
 type EmoConfig struct {
-	Text      string  `json:"text"               mapstructure:"text"`
-	ScrollX   string  `json:"scroll-x,omitempty" mapstructure:"scroll-x"`
-	ScrollY   string  `json:"scroll-y,omitempty" mapstructure:"scroll-y"`
-	Revolve   string  `json:"revolve,omitempty"  mapstructure:"revolve"`
-	Rotate    string  `json:"rotate,omitempty"   mapstructure:"rotate"`
-	Pulsing   string  `json:"pulsing,omitempty"  mapstructure:"pulsing"`
-	Speed     float64 `json:"speed,omitempty"    mapstructure:"speed"`
-	Bg        string  `json:"bg,omitempty"       mapstructure:"bg"`
-	FontColor string  `json:"font-color,omitempty" mapstructure:"font-color"`
-	Out       string  `json:"out,omitempty"      mapstructure:"out"`
-	Font      string  `json:"font,omitempty"     mapstructure:"font"`
+	Text       string  `json:"text"               mapstructure:"text"`
+	ScrollX    string  `json:"scroll-x,omitempty" mapstructure:"scroll-x"`
+	ScrollY    string  `json:"scroll-y,omitempty" mapstructure:"scroll-y"`
+	Revolve    string  `json:"revolve,omitempty"  mapstructure:"revolve"`
+	Rotate     string  `json:"rotate,omitempty"   mapstructure:"rotate"`
+	Pulsing    string  `json:"pulsing,omitempty"  mapstructure:"pulsing"`
+	Speed      float64 `json:"speed,omitempty"    mapstructure:"speed"`
+	Bg         string  `json:"bg,omitempty"       mapstructure:"bg"`
+	FontColor  string  `json:"font-color,omitempty" mapstructure:"font-color"`
+	Out        string  `json:"out,omitempty"      mapstructure:"out"`
+	Font       string  `json:"font,omitempty"     mapstructure:"font"`
+	NoFitWidth bool    `json:"no-fit-width,omitempty" mapstructure:"no-fit-width"`
 }
 
 // SetDefaults はゼロ値フィールドにデフォルト値を設定します。

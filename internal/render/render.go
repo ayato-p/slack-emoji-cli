@@ -49,7 +49,7 @@ func hsvToRGB(h, s, v float64) color.RGBA {
 // draw area and returns the font face, ascent, and descent in points.
 // Uses actual glyph bounds instead of font-declared metrics to handle decorative
 // fonts (e.g., Dela Gothic) that declare larger metrics than their actual CJK glyphs.
-func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, float64, error) {
+func findFontAndMetrics(lines []string, f *opentype.Font, fitWidth bool) (font.Face, float64, float64, error) {
 	ctx := gg.NewContext(canvasSize, canvasSize)
 	fontSize := 120.0
 	var face font.Face
@@ -77,11 +77,33 @@ func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, f
 
 		fits := totalHeight <= drawArea
 		if fits {
-			for _, line := range lines {
-				w, _ := ctx.MeasureString(line)
-				if w > drawArea {
+			if fitWidth {
+				// fit-width: only the shortest line constrains width — wider lines
+				// will be compressed to drawArea at draw time.
+				minW := math.MaxFloat64
+				for _, line := range lines {
+					if line == "" {
+						continue
+					}
+					w, _ := ctx.MeasureString(line)
+					if w < minW {
+						minW = w
+					}
+				}
+				if minW != math.MaxFloat64 && minW > drawArea {
 					fits = false
-					break
+				}
+			} else {
+				// no-fit-width: all lines must fit within drawArea (original behavior).
+				for _, line := range lines {
+					if line == "" {
+						continue
+					}
+					w, _ := ctx.MeasureString(line)
+					if w > drawArea {
+						fits = false
+						break
+					}
 				}
 			}
 		}
@@ -233,6 +255,7 @@ type rendererSpec struct {
 	isRevolve   bool
 	scrollX     *bool // nil=disabled, &false=forward, &true=reverse
 	scrollY     *bool // nil=disabled, &false=forward, &true=reverse
+	noFitWidth  bool  // disable per-line width equalization
 }
 
 // rendererOption configures a rendererSpec.
@@ -288,6 +311,13 @@ func withPulse(reverse *bool) rendererOption {
 	return func(s *rendererSpec) { s.effects = append(s.effects, pulseEffect(*reverse)) }
 }
 
+func withNoFitWidth(v bool) rendererOption {
+	if !v {
+		return nil
+	}
+	return func(s *rendererSpec) { s.noFitWidth = true }
+}
+
 func withGaming() rendererOption {
 	return func(s *rendererSpec) {
 		s.colorEffect = func(frame, total int) color.Color {
@@ -318,7 +348,8 @@ func buildEffect(f *opentype.Font, opts ...rendererOption) (func(frame, total in
 
 // buildTextEffect constructs the per-frame effect closure for the text rendering path.
 func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total int) EffectModel, error) {
-	face, ascent, descent, err := findFontAndMetrics(spec.lines, f)
+	fitWidth := !spec.noFitWidth
+	face, ascent, descent, err := findFontAndMetrics(spec.lines, f, fitWidth)
 	if err != nil {
 		return nil, err
 	}
@@ -326,16 +357,43 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 	n := len(spec.lines)
 	lineH := ascent + descent
 
+	// Measure each line's natural width to determine per-line x-scaling.
+	mctx := gg.NewContext(canvasSize, canvasSize)
+	mctx.SetFontFace(face)
+	lineWidths := make([]float64, len(spec.lines))
+	for i, line := range spec.lines {
+		if line == "" {
+			continue
+		}
+		w, _ := mctx.MeasureString(line)
+		lineWidths[i] = w
+	}
+	nonEmptyLines := 0
+	for _, lw := range lineWidths {
+		if lw > 0 {
+			nonEmptyLines++
+		}
+	}
+
 	// Compute scroll tile sizes from font metrics and append scroll effects.
 	if spec.scrollX != nil {
-		mctx := gg.NewContext(canvasSize, canvasSize)
-		mctx.SetFontFace(face)
 		var tileW float64
-		for _, line := range spec.lines {
-			w, _ := mctx.MeasureString(line)
-			if w > tileW {
-				tileW = w
+		for _, w := range lineWidths {
+			if w == 0 {
+				continue
 			}
+			var rendered float64
+			if (fitWidth && nonEmptyLines > 1) || w > drawArea {
+				rendered = drawArea
+			} else {
+				rendered = w
+			}
+			if rendered > tileW {
+				tileW = rendered
+			}
+		}
+		if tileW <= 0 {
+			tileW = drawArea
 		}
 		spec.effects = append(spec.effects, scrollXEffect(*spec.scrollX, tileW))
 	}
@@ -417,14 +475,32 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 							for i, line := range lines {
 								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
 								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
-								ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+								if lw := lineWidths[i]; lw > 0 && ((fitWidth && nonEmptyLines > 1) || lw > drawArea) {
+									ctx.Push()
+									ctx.Translate(x, y)
+									ctx.Scale(drawArea/lw, 1)
+									ctx.Translate(-x, -y)
+									ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+									ctx.Pop()
+								} else {
+									ctx.DrawStringAnchored(line, x, y, 0.5, 0)
+								}
 							}
 						}
 					}
 				} else {
 					for i, line := range lines {
 						baseline := baseline0 + float64(i)*lineH
-						ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+						if lw := lineWidths[i]; lw > 0 && ((fitWidth && nonEmptyLines > 1) || lw > drawArea) {
+							ctx.Push()
+							ctx.Translate(canvasSize/2, baseline)
+							ctx.Scale(drawArea/lw, 1)
+							ctx.Translate(-canvasSize/2, -baseline)
+							ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+							ctx.Pop()
+						} else {
+							ctx.DrawStringAnchored(line, canvasSize/2, baseline, 0.5, 0)
+						}
 					}
 				}
 

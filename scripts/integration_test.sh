@@ -11,6 +11,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BINARY="/tmp/emo/emo"
 IMGCMP="/tmp/emo/imgcmp"
 TEST_TEXT="テスト"
+MULTILINE_TEXT='東京都\港区'
 
 # ──────────────────────────────────────────────
 # build_binary: バイナリをビルドして /tmp/emo/emo に配置
@@ -31,21 +32,12 @@ build_imgcmp() {
 }
 
 # ──────────────────────────────────────────────
-# run_case: 1ケースを実行して output_dir に保存
-#   $1 = ファイル名（拡張子なし）
-#   $2 = 出力ディレクトリ
-#   $3以降 = emo に渡すフラグ
+# _detect_ext: フラグ列からアニメーション判定して拡張子を出力
 # ──────────────────────────────────────────────
-run_case() {
-  local name="$1"
-  local outdir="$2"
-  shift 2
-  local flags=("$@")
-
-  # 拡張子の自動判定: アニメーションフラグまたは --font-color gaming があれば gif
+_detect_ext() {
   local ext="png"
   local prev=""
-  for f in "${flags[@]}"; do
+  for f in "$@"; do
     case "$f" in
       --rotate|--rotate=*|--revolve|--revolve=*|\
       --scroll-x|--scroll-x=*|--scroll-y|--scroll-y=*|\
@@ -58,13 +50,45 @@ run_case() {
     fi
     prev="$f"
   done
-
-  local outfile="$outdir/${name}.${ext}"
-  "$BINARY" "${flags[@]}" -o "$outfile" "$TEST_TEXT" 2>/dev/null
+  echo "$ext"
 }
 
 # ──────────────────────────────────────────────
-# generate_all: 全28ケースを output_dir に生成
+# run_case: 1ケースを実行して output_dir に保存
+#   $1 = ファイル名（拡張子なし）
+#   $2 = 出力ディレクトリ
+#   $3以降 = emo に渡すフラグ
+# ──────────────────────────────────────────────
+run_case() {
+  local name="$1"
+  local outdir="$2"
+  shift 2
+  local flags=("$@")
+  local ext
+  ext=$(_detect_ext "${flags[@]}")
+  "$BINARY" "${flags[@]}" -o "$outdir/${name}.${ext}" "$TEST_TEXT" 2>/dev/null
+}
+
+# ──────────────────────────────────────────────
+# run_case_t: カスタムテキストで1ケースを実行
+#   $1 = ファイル名（拡張子なし）
+#   $2 = 出力ディレクトリ
+#   $3 = テキスト
+#   $4以降 = emo に渡すフラグ
+# ──────────────────────────────────────────────
+run_case_t() {
+  local name="$1"
+  local outdir="$2"
+  local text="$3"
+  shift 3
+  local flags=("$@")
+  local ext
+  ext=$(_detect_ext "${flags[@]}")
+  "$BINARY" "${flags[@]}" -o "$outdir/${name}.${ext}" "$text" 2>/dev/null
+}
+
+# ──────────────────────────────────────────────
+# generate_all: 全31ケースを output_dir に生成
 # ──────────────────────────────────────────────
 generate_all() {
   local outdir="$1"
@@ -104,6 +128,11 @@ generate_all() {
   run_case "bg-black-fontcolor-white"   "$outdir" --bg '#000000' -c '#FFFFFF'
   run_case "scroll-x-scroll-y-rotate"   "$outdir" --scroll-x --scroll-y --rotate
   run_case "pulsing-scroll-x-scroll-y"  "$outdir" --pulsing --scroll-x --scroll-y
+
+  # ── 複数行幅調整（3件）──
+  run_case_t "multiline-width-diff"     "$outdir" "$MULTILINE_TEXT"
+  run_case_t "multiline-width-no-fit"   "$outdir" "$MULTILINE_TEXT" --no-fit-width
+  run_case_t "multiline-width-scroll-x" "$outdir" "$MULTILINE_TEXT" --scroll-x
 
   local count
   count=$(ls "$outdir" | wc -l)
@@ -278,6 +307,11 @@ pulsing-fontcolor-gaming
 bg-black-fontcolor-white
 scroll-x-scroll-y-rotate
 pulsing-scroll-x-scroll-y
+
+# Multi-line width equalization cases (3)
+multiline-width-diff
+multiline-width-no-fit
+multiline-width-scroll-x
 EOF
 }
 

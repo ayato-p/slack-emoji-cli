@@ -36,6 +36,7 @@ func init() {
 	f.String("scroll-y", "", "add vertical scroll animation (outputs GIF); use =reverse to reverse direction")
 	f.String("pulsing", "", "add scale pulse animation (outputs GIF); use =reverse to reverse direction")
 	f.Float64("speed", 1.0, "animation speed multiplier (0.5–2.0, GIF only)")
+	f.Bool("no-fit-width", false, "disable per-line width equalization for multi-line text")
 
 	for _, name := range []string{"rotate", "revolve", "scroll-x", "scroll-y", "pulsing"} {
 		f.Lookup(name).NoOptDefVal = "true"

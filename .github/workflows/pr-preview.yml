@@ -44,6 +44,11 @@ jobs:
           ./emo -o preview-images/single-medium.png 'お気持ち'
           ./emo -o preview-images/multiline-2.png '猫に\小判'
 
+          # 複数行（行幅自動圧縮）
+          ./emo -o preview-images/multiline-width-diff.png '東京都\港区'
+          ./emo -o preview-images/multiline-width-extreme.png 'ありがとう\ね'
+          ./emo -o preview-images/multiline-width-3lines.png '東京都\港区\芝'
+
           # 背景色
           ./emo --bg '#E63946' -o preview-images/bg-red.png 'LGTM'
           ./emo --bg '#2ECC71' -o preview-images/bg-green.png '完了'
@@ -147,6 +152,14 @@ jobs:
               '|---------|------|',
               `| \`emo 'お気持ち'\` | ![お気持ち](${base}/single-medium.png) |`,
               `| \`emo '猫に\\小判'\` | ![猫に\\小判](${base}/multiline-2.png) |`,
+              '',
+              '### 複数行（行幅自動圧縮）',
+              '',
+              '| コマンド | 出力 |',
+              '|---------|------|',
+              `| \`emo '東京都\\港区'\` | ![東京都\\港区](${base}/multiline-width-diff.png) |`,
+              `| \`emo 'ありがとう\\ね'\` | ![ありがとう\\ね](${base}/multiline-width-extreme.png) |`,
+              `| \`emo '東京都\\港区\\芝'\` | ![東京都\\港区\\芝](${base}/multiline-width-3lines.png) |`,
               '',
               '### 背景色 (--bg)',
               '',
