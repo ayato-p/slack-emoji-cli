@@ -11,6 +11,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BINARY="/tmp/emo/emo"
 IMGCMP="/tmp/emo/imgcmp"
 TEST_TEXT="テスト"
+MULTILINE_TEXT='東京都\港区'
 
 # ──────────────────────────────────────────────
 # build_binary: バイナリをビルドして /tmp/emo/emo に配置
@@ -64,6 +65,40 @@ run_case() {
 }
 
 # ──────────────────────────────────────────────
+# run_case_t: カスタムテキストで1ケースを実行
+#   $1 = ファイル名（拡張子なし）
+#   $2 = 出力ディレクトリ
+#   $3 = テキスト
+#   $4以降 = emo に渡すフラグ
+# ──────────────────────────────────────────────
+run_case_t() {
+  local name="$1"
+  local outdir="$2"
+  local text="$3"
+  shift 3
+  local flags=("$@")
+
+  local ext="png"
+  local prev=""
+  for f in "${flags[@]}"; do
+    case "$f" in
+      --rotate|--rotate=*|--revolve|--revolve=*|\
+      --scroll-x|--scroll-x=*|--scroll-y|--scroll-y=*|\
+      --pulsing|--pulsing=*)
+        ext="gif"
+        ;;
+    esac
+    if [[ "$prev" == "--font-color" || "$prev" == "-c" ]] && [[ "$f" == "gaming" ]]; then
+      ext="gif"
+    fi
+    prev="$f"
+  done
+
+  local outfile="$outdir/${name}.${ext}"
+  "$BINARY" "${flags[@]}" -o "$outfile" "$text" 2>/dev/null
+}
+
+# ──────────────────────────────────────────────
 # generate_all: 全28ケースを output_dir に生成
 # ──────────────────────────────────────────────
 generate_all() {
@@ -104,6 +139,11 @@ generate_all() {
   run_case "bg-black-fontcolor-white"   "$outdir" --bg '#000000' -c '#FFFFFF'
   run_case "scroll-x-scroll-y-rotate"   "$outdir" --scroll-x --scroll-y --rotate
   run_case "pulsing-scroll-x-scroll-y"  "$outdir" --pulsing --scroll-x --scroll-y
+
+  # ── 複数行幅調整（3件）──
+  run_case_t "multiline-width-diff"     "$outdir" "$MULTILINE_TEXT"
+  run_case_t "multiline-width-no-fit"   "$outdir" "$MULTILINE_TEXT" --no-fit-width
+  run_case_t "multiline-width-scroll-x" "$outdir" "$MULTILINE_TEXT" --scroll-x
 
   local count
   count=$(ls "$outdir" | wc -l)
@@ -278,6 +318,11 @@ pulsing-fontcolor-gaming
 bg-black-fontcolor-white
 scroll-x-scroll-y-rotate
 pulsing-scroll-x-scroll-y
+
+# Multi-line width equalization cases (3)
+multiline-width-diff
+multiline-width-no-fit
+multiline-width-scroll-x
 EOF
 }
 

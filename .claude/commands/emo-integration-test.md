@@ -51,7 +51,7 @@ bash scripts/integration_test.sh generate /tmp/emo/before
 bash scripts/integration_test.sh list
 ```
 
-全28ケース名を表示する。`after` に渡すケース名が不明なときに使う。
+全31ケース名を表示する。`after` に渡すケース名が不明なときに使う。
 
 ## ケース名とオプションの対応
 
@@ -67,4 +67,5 @@ bash scripts/integration_test.sh list
 | `--font-color gaming` 関連 | `fontcolor-gaming`, `fontcolor-gaming-rotate`, `fontcolor-gaming-revolve`, `pulsing-fontcolor-gaming` |
 | `--speed` 関連 | `speed-slow-rotate`, `speed-fast-rotate` |
 | `--bg` / `--font-color` 関連 | `bg-red`, `fontcolor-red`, `bg-black-fontcolor-white` |
+| `--no-fit-width` 関連 | `multiline-width-diff`, `multiline-width-no-fit`, `multiline-width-scroll-x` |
 | 共通処理（全体に影響） | 全ケース名を指定する（または expected なしで実行する） |
