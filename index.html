@@ -64,7 +64,7 @@
   <p class="subtitle">
     テキストから Slack 絵文字を生成するツール &mdash;
     <a href="https://github.com/ayato-p/slack-emoji-cli">ayato-p/slack-emoji-cli</a>
-    &nbsp;|&nbsp; commit: <code>681c865</code>
+    &nbsp;|&nbsp; commit: <code>34ecfa7</code>
   </p>
 
   <h2>基本テキスト</h2>
@@ -80,6 +80,27 @@
       <tr>
         <td><code>emo '猫に\小判'</code></td>
         <td><img src="multiline-2.png" alt="猫に\小判"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>複数行（行幅自動圧縮）</h2>
+  <table>
+    <thead>
+      <tr><th>コマンド</th><th>出力</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>emo '東京都\港区'</code></td>
+        <td><img src="multiline-width-diff.png" alt="東京都\港区"></td>
+      </tr>
+      <tr>
+        <td><code>emo 'ありがとう\ね'</code></td>
+        <td><img src="multiline-width-extreme.png" alt="ありがとう\ね"></td>
+      </tr>
+      <tr>
+        <td><code>emo '東京都\港区\芝'</code></td>
+        <td><img src="multiline-width-3lines.png" alt="東京都\港区\芝"></td>
       </tr>
     </tbody>
   </table>
