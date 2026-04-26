@@ -37,16 +37,13 @@ build_imgcmp() {
 #   $2 = 出力ディレクトリ
 #   $3以降 = emo に渡すフラグ
 # ──────────────────────────────────────────────
-run_case() {
-  local name="$1"
-  local outdir="$2"
-  shift 2
-  local flags=("$@")
-
-  # 拡張子の自動判定: アニメーションフラグまたは --font-color gaming があれば gif
+# ──────────────────────────────────────────────
+# _detect_ext: フラグ列からアニメーション判定して拡張子を出力
+# ──────────────────────────────────────────────
+_detect_ext() {
   local ext="png"
   local prev=""
-  for f in "${flags[@]}"; do
+  for f in "$@"; do
     case "$f" in
       --rotate|--rotate=*|--revolve|--revolve=*|\
       --scroll-x|--scroll-x=*|--scroll-y|--scroll-y=*|\
@@ -59,9 +56,17 @@ run_case() {
     fi
     prev="$f"
   done
+  echo "$ext"
+}
 
-  local outfile="$outdir/${name}.${ext}"
-  "$BINARY" "${flags[@]}" -o "$outfile" "$TEST_TEXT" 2>/dev/null
+run_case() {
+  local name="$1"
+  local outdir="$2"
+  shift 2
+  local flags=("$@")
+  local ext
+  ext=$(_detect_ext "${flags[@]}")
+  "$BINARY" "${flags[@]}" -o "$outdir/${name}.${ext}" "$TEST_TEXT" 2>/dev/null
 }
 
 # ──────────────────────────────────────────────
@@ -77,29 +82,13 @@ run_case_t() {
   local text="$3"
   shift 3
   local flags=("$@")
-
-  local ext="png"
-  local prev=""
-  for f in "${flags[@]}"; do
-    case "$f" in
-      --rotate|--rotate=*|--revolve|--revolve=*|\
-      --scroll-x|--scroll-x=*|--scroll-y|--scroll-y=*|\
-      --pulsing|--pulsing=*)
-        ext="gif"
-        ;;
-    esac
-    if [[ "$prev" == "--font-color" || "$prev" == "-c" ]] && [[ "$f" == "gaming" ]]; then
-      ext="gif"
-    fi
-    prev="$f"
-  done
-
-  local outfile="$outdir/${name}.${ext}"
-  "$BINARY" "${flags[@]}" -o "$outfile" "$text" 2>/dev/null
+  local ext
+  ext=$(_detect_ext "${flags[@]}")
+  "$BINARY" "${flags[@]}" -o "$outdir/${name}.${ext}" "$text" 2>/dev/null
 }
 
 # ──────────────────────────────────────────────
-# generate_all: 全28ケースを output_dir に生成
+# generate_all: 全31ケースを output_dir に生成
 # ──────────────────────────────────────────────
 generate_all() {
   local outdir="$1"

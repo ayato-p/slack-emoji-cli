@@ -96,6 +96,9 @@ func findFontAndMetrics(lines []string, f *opentype.Font, fitWidth bool) (font.F
 			} else {
 				// no-fit-width: all lines must fit within drawArea (original behavior).
 				for _, line := range lines {
+					if line == "" {
+						continue
+					}
 					w, _ := ctx.MeasureString(line)
 					if w > drawArea {
 						fits = false
@@ -354,7 +357,7 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 	n := len(spec.lines)
 	lineH := ascent + descent
 
-	// Measure each line's natural width to determine which lines need compression.
+	// Measure each line's natural width to determine per-line x-scaling.
 	mctx := gg.NewContext(canvasSize, canvasSize)
 	mctx.SetFontFace(face)
 	lineWidths := make([]float64, len(spec.lines))
