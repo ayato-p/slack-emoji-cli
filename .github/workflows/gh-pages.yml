@@ -44,9 +44,9 @@ jobs:
           ./emo -o sample-images/multiline-2.png '猫に\小判'
 
           # 複数行（行幅自動圧縮）
-          ./emo -o sample-images/multiline-width-diff.png '神奈川\和尚'
+          ./emo -o sample-images/multiline-width-diff.png '東京都\港区'
           ./emo -o sample-images/multiline-width-extreme.png 'ありがとう\ね'
-          ./emo -o sample-images/multiline-width-3lines.png '神奈川\和尚\寺'
+          ./emo -o sample-images/multiline-width-3lines.png '東京都\港区\芝'
 
           # 背景色
           ./emo --bg '#E63946' -o sample-images/bg-red.png 'LGTM'
@@ -198,16 +198,16 @@ jobs:
               </thead>
               <tbody>
                 <tr>
-                  <td><code>emo '神奈川\和尚'</code></td>
-                  <td><img src="multiline-width-diff.png" alt="神奈川\和尚"></td>
+                  <td><code>emo '東京都\港区'</code></td>
+                  <td><img src="multiline-width-diff.png" alt="東京都\港区"></td>
                 </tr>
                 <tr>
                   <td><code>emo 'ありがとう\ね'</code></td>
                   <td><img src="multiline-width-extreme.png" alt="ありがとう\ね"></td>
                 </tr>
                 <tr>
-                  <td><code>emo '神奈川\和尚\寺'</code></td>
-                  <td><img src="multiline-width-3lines.png" alt="神奈川\和尚\寺"></td>
+                  <td><code>emo '東京都\港区\芝'</code></td>
+                  <td><img src="multiline-width-3lines.png" alt="東京都\港区\芝"></td>
                 </tr>
               </tbody>
             </table>
