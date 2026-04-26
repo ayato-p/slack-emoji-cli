@@ -69,6 +69,7 @@ func Run(cfg config.EmoConfig) error {
 		withScrollX(scrollX), withScrollY(scrollY),
 		withRevolve(revolve), withRotate(rotate),
 		withPulse(pulsing),
+		withNoFitWidth(cfg.NoFitWidth),
 	)
 
 	effect, err := buildEffect(font, opts...)
