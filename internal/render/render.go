@@ -79,17 +79,17 @@ func findFontAndMetrics(lines []string, f *opentype.Font) (font.Face, float64, f
 		if fits {
 			// For multi-line text, only the shortest line constrains width — wider lines
 			// will be compressed to drawArea at draw time.
-			var minW float64
+			minW := math.MaxFloat64
 			for _, line := range lines {
 				if line == "" {
 					continue
 				}
 				w, _ := ctx.MeasureString(line)
-				if minW == 0 || w < minW {
+				if w < minW {
 					minW = w
 				}
 			}
-			if minW > drawArea {
+			if minW != math.MaxFloat64 && minW > drawArea {
 				fits = false
 			}
 		}
@@ -382,6 +382,12 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 	bgColor := spec.bgColor
 	fontColor := spec.fontColor
 	colorEffect := spec.colorEffect
+	nonEmptyLines := 0
+	for _, lw := range lineWidths {
+		if lw > 0 {
+			nonEmptyLines++
+		}
+	}
 
 	return func(frame, total int) EffectModel {
 		params := effect(frame, total)
@@ -442,7 +448,7 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 							for i, line := range lines {
 								x := canvasSize/2.0 + scrollXPre + float64(k)*p.ScrollTileW
 								y := baseline0 + scrollYPre + float64(l)*p.ScrollTileH + float64(i)*lineH
-								if lw := lineWidths[i]; lw > 0 && (len(lines) > 1 || lw > drawArea) {
+								if lw := lineWidths[i]; lw > 0 && (nonEmptyLines > 1 || lw > drawArea) {
 									ctx.Push()
 									ctx.Translate(x, y)
 									ctx.Scale(drawArea/lw, 1)
@@ -458,7 +464,7 @@ func buildTextEffect(f *opentype.Font, spec *rendererSpec) (func(frame, total in
 				} else {
 					for i, line := range lines {
 						baseline := baseline0 + float64(i)*lineH
-						if lw := lineWidths[i]; lw > 0 && (len(lines) > 1 || lw > drawArea) {
+						if lw := lineWidths[i]; lw > 0 && (nonEmptyLines > 1 || lw > drawArea) {
 							ctx.Push()
 							ctx.Translate(canvasSize/2, baseline)
 							ctx.Scale(drawArea/lw, 1)
